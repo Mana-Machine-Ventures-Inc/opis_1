@@ -1,0 +1,174 @@
+$schema: "https://opis-spec.org/schema/0.1"
+
+opis: "0.1"
+
+component:
+  id: "com.example/Button"
+  name: "Button"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  kind:
+    type: enum
+    values: [text, icon]
+    default: text
+    role: variant
+
+  size:
+    type: enum
+    values: [small, medium, large]
+    default: medium
+    role: variant
+
+  tone:
+    type: enum
+    values: [primary, secondary, destructive]
+    default: primary
+    role: variant
+
+  label:
+    type: string
+    optional: true
+    role: content
+
+  icon:
+    type: component
+    accepts: "com.example/Icon"
+    optional: true
+    role: slot
+
+  iconPosition:
+    type: enum
+    values: [leading, trailing]
+    default: leading
+
+    availableWhen:
+      exists: "$arguments.icon"
+
+constraints:
+  - require:
+      when:
+        eq: ["$arguments.kind", text]
+
+      then:
+        exists: "$arguments.label"
+
+  - forbid:
+      all:
+        - eq: ["$arguments.kind", icon]
+        - not:
+            exists: "$arguments.icon"
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  distribution: center
+
+  gap:
+    match:
+      on: "$arguments.kind"
+      cases:
+        text: "{core.spacing.200}"
+        icon: 0
+
+  height:
+    match:
+      on: "$arguments.size"
+      cases:
+        small:
+          mode: fixed
+          value: "{core.control.height.small}"
+        medium:
+          mode: fixed
+          value: "{core.control.height.medium}"
+        large:
+          mode: fixed
+          value: "{core.control.height.large}"
+
+  width:
+    match:
+      on: "$arguments.kind"
+      cases:
+        text:
+          mode: intrinsic
+        icon:
+          match:
+            on: "$arguments.size"
+            cases:
+              small:
+                mode: fixed
+                value: "{core.control.height.small}"
+              medium:
+                mode: fixed
+                value: "{core.control.height.medium}"
+              large:
+                mode: fixed
+                value: "{core.control.height.large}"
+
+  padding:
+    match:
+      on: "$arguments.kind"
+      cases:
+        icon: 0
+        text:
+          block: "{core.spacing.200}"
+          inline:
+            match:
+              on: "$arguments.size"
+              cases:
+                small: "{core.spacing.300}"
+                medium: "{core.spacing.400}"
+                large: "{core.spacing.500}"
+
+  order:
+    match:
+      on: "$arguments.iconPosition"
+      cases:
+        leading:
+          - icon
+          - label
+        trailing:
+          - label
+          - icon
+
+  style:
+    background:
+      match:
+        on: "$arguments.tone"
+        cases:
+          primary: "{core.color.action.primary}"
+          secondary: "{core.color.action.secondary}"
+          destructive: "{core.color.action.destructive}"
+    radius: "{core.radius.control}"
+
+  children:
+    - id: icon
+      type: slot
+      source: "$arguments.icon"
+
+    - id: label
+      type: text
+      content: "$arguments.label"
+      hidden:
+        match:
+          on: "$arguments.kind"
+          cases:
+            text: false
+            icon: true
+
+      style:
+        typography: "{core.typography.button}"
+        color:
+          match:
+            on: "$arguments.tone"
+            cases:
+              primary: "{core.color.text.onAction}"
+              secondary: "{core.color.text.primary}"
+              destructive: "{core.color.text.onAction}"

@@ -1,0 +1,41 @@
+{
+  "spacing": {
+    "200": { "$type": "dimension", "$value": "8px" },
+    "300": { "$type": "dimension", "$value": "12px" },
+    "400": { "$type": "dimension", "$value": "16px" },
+    "500": { "$type": "dimension", "$value": "20px" }
+  },
+  "control": {
+    "height": {
+      "small": { "$type": "dimension", "$value": "32px" },
+      "medium": { "$type": "dimension", "$value": "40px" },
+      "large": { "$type": "dimension", "$value": "48px" }
+    }
+  },
+  "color": {
+    "action": {
+      "primary": { "$type": "color", "$value": "#2563eb" },
+      "secondary": { "$type": "color", "$value": "#e2e8f0" },
+      "destructive": { "$type": "color", "$value": "#dc2626" }
+    },
+    "text": {
+      "onAction": { "$type": "color", "$value": "#ffffff" },
+      "primary": { "$type": "color", "$value": "#0f172a" }
+    }
+  },
+  "radius": {
+    "control": { "$type": "dimension", "$value": "8px" }
+  },
+  "typography": {
+    "button": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "14px",
+        "fontWeight": 600,
+        "lineHeight": "1.2",
+        "letterSpacing": "0.01em"
+      }
+    }
+  }
+}
