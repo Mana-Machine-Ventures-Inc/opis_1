@@ -1,0 +1,115 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/ListItem"
+  name: "ListItem"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  initials:
+    type: string
+    default: "AC"
+    role: content
+
+  title:
+    type: string
+    default: "Harbor studio"
+    role: content
+
+  subtitle:
+    type: string
+    optional: true
+    default: "Interface contracts that survive the trip from Figma to code."
+    role: content
+
+  badge:
+    type: string
+    optional: true
+    default: "Live"
+    role: content
+
+  tone:
+    type: enum
+    values: [neutral, info, success, warning, destructive]
+    default: success
+    role: variant
+
+  selected:
+    type: boolean
+    default: false
+    role: state
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  gap: "{core.spacing.300}"
+  width:
+    mode: fill
+  padding: "{core.spacing.300}"
+  style:
+    radius: "{core.radius.control}"
+    background:
+      match:
+        on: "$arguments.selected"
+        cases:
+          true: "{core.color.surface.info}"
+          false: "{core.color.surface.default}"
+    stroke: "{core.color.line}"
+
+  children:
+    - id: avatar
+      type: component
+      component: "com.example/Avatar"
+      arguments:
+        initials: "$arguments.initials"
+        size: small
+        tone: primary
+
+    - id: copy
+      type: stack
+      axis: vertical
+      align: start
+      gap: "{core.spacing.100}"
+      width:
+        mode: fill
+
+      children:
+        - id: title
+          type: text
+          content: "$arguments.title"
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.primary}"
+
+        - id: subtitle
+          type: text
+          content: "$arguments.subtitle"
+          hidden:
+            if:
+              exists: "$arguments.subtitle"
+            then: false
+            else: true
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.secondary}"
+
+    - id: badge
+      type: component
+      component: "com.example/Badge"
+      arguments:
+        label: "$arguments.badge"
+        tone: "$arguments.tone"
+        size: small
+      hidden:
+        if:
+          exists: "$arguments.badge"
+        then: false
+        else: true

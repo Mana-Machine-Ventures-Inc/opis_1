@@ -1,0 +1,52 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Feed"
+  name: "Feed"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  items:
+    type: component[]
+    accepts:
+      protocol: ListItem
+    minItems: 1
+    default:
+      - component: "com.example/ListItem"
+        arguments:
+          initials: AC
+          title: Harbor studio
+          subtitle: A quiet workspace for writing interface contracts.
+          badge: Live
+          tone: success
+          selected: true
+      - component: "com.example/ListItem"
+        arguments:
+          initials: BK
+          title: Atlas tokens
+          subtitle: Shared color, type, and density across hosts.
+          badge: Draft
+          tone: warning
+      - component: "com.example/ListItem"
+        arguments:
+          initials: Cy
+          title: Nested shells
+          subtitle: App chrome that embeds search, lists, and forms.
+          badge: New
+          tone: info
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.items"
+  layout:
+    axis: vertical
+    gap: "{core.spacing.200}"
+  width:
+    mode: fill

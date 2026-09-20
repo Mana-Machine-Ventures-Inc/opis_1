@@ -1,13 +1,35 @@
 import { isObject } from "../core/expressions.ts";
 import type { Json } from "../core/types.ts";
 
+const GLYPHS: Record<string, string> = {
+  plus: `<circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/>`,
+  search: `<circle cx="7" cy="7" r="4.25"/><path d="M10.2 10.2L13 13"/>`,
+  check: `<path d="M3.5 8.2l3 3.1 6-6.4"/>`,
+  close: `<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>`,
+  minus: `<path d="M4 8h8"/>`,
+  info: `<circle cx="8" cy="8" r="6"/><path d="M8 7.2v4"/><path d="M8 5.2v0.1"/>`,
+  warning: `<path d="M8 2.8L14 13.2H2L8 2.8z"/><path d="M8 6.6v3.2"/><path d="M8 11.4v0.2"/>`,
+};
+
+const TONE_FILL: Record<string, string> = {
+  primary: "#2563eb",
+  secondary: "#e2e8f0",
+  destructive: "#dc2626",
+};
+
+const TONE_INK: Record<string, string> = {
+  primary: "#ffffff",
+  secondary: "#0f172a",
+  destructive: "#ffffff",
+};
+
 export function renderNode(tree: Json): HTMLElement {
   const el = createNode(tree);
   el.classList.add("opis-root");
   return el;
 }
 
-function createNode(value: Json): HTMLElement {
+function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLElement {
   if (!isObject(value) || typeof value.type !== "string") {
     const empty = document.createElement("span");
     empty.dataset.missing = "true";
@@ -22,7 +44,13 @@ function createNode(value: Json): HTMLElement {
     const text = document.createElement("span");
     text.className = "opis-text";
     text.textContent = value.content == null ? "" : String(value.content);
+    applyBox(text, value, parentAxis);
     applyStyle(text, value.style);
+    if (parentAxis === "horizontal" && isObject(value.width) && value.width.mode === "fill") {
+      text.style.whiteSpace = "nowrap";
+      text.style.overflow = "hidden";
+      text.style.textOverflow = "ellipsis";
+    }
     return text;
   }
 
@@ -30,26 +58,52 @@ function createNode(value: Json): HTMLElement {
     if (isAbsentSlot(value.source)) {
       return document.createElement("span");
     }
+    if (isObject(value.source) && typeof value.source.type === "string") {
+      return createNode(value.source, parentAxis);
+    }
     return renderIcon(value);
+  }
+
+  if (value.type === "instance") {
+    const painted = Array.isArray(value.children) ? value.children[0] : null;
+    const inner = painted == null ? document.createElement("div") : createNode(painted, parentAxis);
+    applyBox(inner, value, parentAxis);
+    return inner;
+  }
+
+  if (value.type === "component") {
+    return renderComponent(value, parentAxis);
   }
 
   const box = document.createElement("div");
   box.className = `opis-node opis-${value.type}`;
   if (typeof value.id === "string") box.dataset.id = value.id;
 
+  const axis: "horizontal" | "vertical" | undefined =
+    value.type === "stack" || value.type === "collection"
+      ? value.axis === "vertical"
+        ? "vertical"
+        : "horizontal"
+      : parentAxis;
+
   if (value.type === "stack" || value.type === "collection") {
     box.style.display = "flex";
-    box.style.flexDirection = value.axis === "vertical" ? "column" : "row";
+    box.style.flexDirection = axis === "vertical" ? "column" : "row";
     box.style.alignItems = alignItems(value.align);
     box.style.justifyContent = justifyContent(value.distribution);
+    if (value.wrap === true) box.style.flexWrap = "wrap";
   }
 
-  applyBox(box, value);
+  if (value.type === "media") {
+    box.setAttribute("aria-hidden", "true");
+  }
+
+  applyBox(box, value, parentAxis);
   applyStyle(box, value.style);
 
   const children = participatingChildren(value);
   for (const child of children) {
-    const rendered = createNode(withInheritedMetrics(child, value));
+    const rendered = createNode(withInheritedMetrics(child, value), axis);
     if (rendered.dataset.missing === "true") continue;
     if (rendered.tagName === "SPAN" && rendered.className === "" && !rendered.textContent) {
       continue;
@@ -62,7 +116,7 @@ function createNode(value: Json): HTMLElement {
 
 function withInheritedMetrics(child: Json, parent: { [key: string]: Json }): Json {
   if (!isObject(child) || child.type !== "slot") return child;
-  return { ...child, height: parent.height ?? null };
+  return { ...child, height: child.height ?? parent.height ?? null };
 }
 
 function participatingChildren(node: { [key: string]: Json }): Json[] {
@@ -86,23 +140,95 @@ function renderIcon(node: { [key: string]: Json }): HTMLElement {
   const size = iconSize(node);
   wrap.style.width = `${size}px`;
   wrap.style.height = `${size}px`;
-  wrap.innerHTML = `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>`;
+  wrap.style.flex = "0 0 auto";
+  applyStyle(wrap, node.style);
+  const name = glyphName(node.source);
+  const paths = GLYPHS[name] ?? GLYPHS.plus;
+  wrap.innerHTML = `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
   return wrap;
+}
+
+function glyphName(source: Json | undefined): string {
+  if (isObject(source) && typeof source.glyph === "string") return source.glyph;
+  if (isObject(source) && isObject(source.arguments) && typeof source.arguments.name === "string") {
+    return source.arguments.name;
+  }
+  return "plus";
+}
+
+function renderComponent(node: { [key: string]: Json }, parentAxis?: "horizontal" | "vertical"): HTMLElement {
+  const args = isObject(node.arguments) ? node.arguments : {};
+  const label = args.label == null ? stubLabel(node) : String(args.label);
+  const tone = typeof args.tone === "string" ? args.tone : "secondary";
+  const el = document.createElement("div");
+  el.className = "opis-component";
+  el.textContent = label;
+  el.style.display = "inline-flex";
+  el.style.alignItems = "center";
+  el.style.justifyContent = "center";
+  el.style.gap = "8px";
+  el.style.height = "32px";
+  el.style.padding = "0 12px";
+  el.style.borderRadius = "8px";
+  el.style.fontFamily = "Inter, ui-sans-serif, system-ui, sans-serif";
+  el.style.fontSize = "13px";
+  el.style.fontWeight = "600";
+  el.style.lineHeight = "1.2";
+  el.style.whiteSpace = "nowrap";
+  el.style.background = TONE_FILL[tone] ?? TONE_FILL.secondary;
+  el.style.color = TONE_INK[tone] ?? TONE_INK.secondary;
+  applyBox(el, node, parentAxis);
+  applyStyle(el, node.style);
+  return el;
+}
+
+function stubLabel(node: { [key: string]: Json }): string {
+  if (typeof node.component === "string") {
+    const parts = node.component.split("/");
+    return parts[parts.length - 1] || "Component";
+  }
+  return "Component";
 }
 
 function iconSize(node: { [key: string]: Json }): number {
   const height = dimensionValue(node.height);
-  if (height) return Math.max(12, Math.round(height * 0.45));
+  if (height) return Math.max(12, Math.round(height * 0.55));
   return 16;
 }
 
-function applyBox(el: HTMLElement, node: { [key: string]: Json }) {
+function applyBox(
+  el: HTMLElement,
+  node: { [key: string]: Json },
+  parentAxis?: "horizontal" | "vertical",
+) {
   const gap = cssLength(node.gap);
   if (gap) el.style.gap = gap;
 
   applyPadding(el, node.padding);
-  applyDimension(el, "height", node.height);
-  applyDimension(el, "width", node.width);
+  applyDimension(el, "height", node.height, parentAxis);
+  applyDimension(el, "width", node.width, parentAxis);
+
+  if (node.maxWidth != null) {
+    const maxWidth = cssLength(node.maxWidth);
+    if (maxWidth) el.style.maxWidth = maxWidth;
+  }
+  if (node.minWidth != null) {
+    const minWidth = cssLength(node.minWidth);
+    if (minWidth) el.style.minWidth = minWidth;
+  }
+  if (node.minHeight != null) {
+    const minHeight = cssLength(node.minHeight);
+    if (minHeight) el.style.minHeight = minHeight;
+  }
+  if (node.maxHeight != null) {
+    const maxHeight = cssLength(node.maxHeight);
+    if (maxHeight) el.style.maxHeight = maxHeight;
+  }
+  if (node.aspectRatio != null) el.style.aspectRatio = String(node.aspectRatio);
+  if (node.overflow != null) {
+    const overflow = String(node.overflow);
+    el.style.overflow = overflow === "clip" ? "hidden" : overflow;
+  }
 }
 
 function applyPadding(el: HTMLElement, padding: Json | undefined) {
@@ -124,6 +250,7 @@ function applyDimension(
   el: HTMLElement,
   property: "width" | "height",
   value: Json | undefined,
+  parentAxis?: "horizontal" | "vertical",
 ) {
   if (!isObject(value) || typeof value.mode !== "string") return;
   if (value.mode === "fixed") {
@@ -131,6 +258,14 @@ function applyDimension(
     if (property === "width") el.style.flex = "0 0 auto";
   } else if (value.mode === "fill") {
     el.style[property] = "100%";
+    if (property === "width") {
+      el.style.minWidth = el.style.minWidth || "0";
+      el.dataset.widthMode = "fill";
+      if (parentAxis === "horizontal") el.style.flex = "1 1 auto";
+    }
+    if (property === "height" && parentAxis === "vertical") {
+      el.style.flex = "1 1 auto";
+    }
   } else if (value.mode === "intrinsic") {
     el.style[property] = "auto";
   }
@@ -141,6 +276,10 @@ function applyStyle(el: HTMLElement, style: Json | undefined) {
   if (typeof style.background === "string") el.style.background = style.background;
   if (typeof style.color === "string") el.style.color = style.color;
   if (style.radius != null) el.style.borderRadius = cssLength(style.radius) ?? "";
+  if (style.opacity != null) el.style.opacity = String(style.opacity);
+  if (typeof style.border === "string") el.style.border = style.border;
+  if (typeof style.stroke === "string") el.style.border = `1px solid ${style.stroke}`;
+  if (typeof style.shadow === "string") el.style.boxShadow = style.shadow;
   if (isObject(style.typography)) {
     const type = style.typography;
     if (typeof type.fontFamily === "string") el.style.fontFamily = type.fontFamily;

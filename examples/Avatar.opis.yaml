@@ -1,0 +1,87 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Avatar"
+  name: "Avatar"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  initials:
+    type: string
+    default: "AC"
+    role: content
+
+  size:
+    type: enum
+    values: [small, medium, large]
+    default: medium
+    role: variant
+
+  tone:
+    type: enum
+    values: [primary, secondary, destructive]
+    default: primary
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  distribution: center
+  width:
+    match:
+      on: "$arguments.size"
+      cases:
+        small:
+          mode: fixed
+          value: 32
+        medium:
+          mode: fixed
+          value: 40
+        large:
+          mode: fixed
+          value: 56
+  height:
+    match:
+      on: "$arguments.size"
+      cases:
+        small:
+          mode: fixed
+          value: 32
+        medium:
+          mode: fixed
+          value: 40
+        large:
+          mode: fixed
+          value: 56
+  style:
+    radius: "{core.radius.full}"
+    background:
+      match:
+        on: "$arguments.tone"
+        cases:
+          primary: "{core.color.action.primary}"
+          secondary: "{core.color.action.secondary}"
+          destructive: "{core.color.action.destructive}"
+    color:
+      match:
+        on: "$arguments.tone"
+        cases:
+          primary: "{core.color.text.onAction}"
+          secondary: "{core.color.text.primary}"
+          destructive: "{core.color.text.onAction}"
+
+  children:
+    - id: initials
+      type: text
+      content: "$arguments.initials"
+      style:
+        typography: "{core.typography.label}"
+        color: inherit

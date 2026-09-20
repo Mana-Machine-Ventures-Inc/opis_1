@@ -1,0 +1,160 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/AppShell"
+  name: "AppShell"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  brand:
+    type: string
+    default: "OPIS"
+    role: content
+
+  query:
+    type: string
+    optional: true
+    role: content
+
+  collapsed:
+    type: boolean
+    default: false
+    role: state
+
+  page:
+    type: enum
+    values: [home, settings]
+    default: home
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.300}"
+  width:
+    mode: fill
+  minHeight: 360
+  padding: "{core.spacing.300}"
+  style:
+    background: "{core.color.surface.sunken}"
+    radius: "{core.radius.card}"
+
+  children:
+    - id: chrome
+      type: component
+      component: "com.example/NavBar"
+      arguments:
+        brand: "$arguments.brand"
+        query: "$arguments.query"
+        dense: "$arguments.collapsed"
+
+    - id: body
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      height:
+        mode: fill
+
+      children:
+        - id: sidebar
+          type: stack
+          axis: vertical
+          align: stretch
+          gap: "{core.spacing.200}"
+          width:
+            mode: fixed
+            value: 180
+          padding: "{core.spacing.300}"
+          hidden:
+            match:
+              on: "$arguments.collapsed"
+              cases:
+                true: true
+                false: false
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.control}"
+
+          children:
+            - id: nav-home
+              type: stack
+              padding: "{core.spacing.200}"
+              style:
+                radius: "{core.radius.control}"
+                background:
+                  match:
+                    on: "$arguments.page"
+                    cases:
+                      home: "{core.color.surface.info}"
+                      settings: transparent
+              children:
+                - id: nav-home-label
+                  type: text
+                  content: Home
+                  style:
+                    typography: "{core.typography.label}"
+                    color: "{core.color.text.primary}"
+
+            - id: nav-settings
+              type: stack
+              padding: "{core.spacing.200}"
+              style:
+                radius: "{core.radius.control}"
+                background:
+                  match:
+                    on: "$arguments.page"
+                    cases:
+                      settings: "{core.color.surface.info}"
+                      home: transparent
+              children:
+                - id: nav-settings-label
+                  type: text
+                  content: Settings
+                  style:
+                    typography: "{core.typography.label}"
+                    color: "{core.color.text.primary}"
+
+            - id: tags
+              type: component
+              component: "com.example/TagList"
+
+        - id: main
+          type: stack
+          axis: vertical
+          align: stretch
+          gap: "{core.spacing.300}"
+          width:
+            mode: fill
+          padding: "{core.spacing.400}"
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.control}"
+
+          children:
+            - id: page
+              type: component
+              component:
+                match:
+                  on: "$arguments.page"
+                  cases:
+                    home: "com.example/Tabs"
+                    settings: "com.example/Form"
+              arguments:
+                match:
+                  on: "$arguments.page"
+                  cases:
+                    home:
+                      selected: overview
+                    settings:
+                      error: false

@@ -1,0 +1,108 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/TextField"
+  name: "TextField"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  label:
+    type: string
+    default: "Email"
+    role: content
+
+  value:
+    type: string
+    optional: true
+    role: content
+
+  placeholder:
+    type: string
+    default: "name@example.com"
+    role: content
+
+  supporting:
+    type: string
+    optional: true
+    role: content
+
+  error:
+    type: boolean
+    default: false
+    role: state
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.200}"
+  width:
+    mode: fill
+
+  children:
+    - id: label
+      type: text
+      content: "$arguments.label"
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.primary}"
+
+    - id: field
+      type: stack
+      axis: horizontal
+      align: center
+      distribution: start
+      height:
+        mode: fixed
+        value: "{core.control.height.medium}"
+      padding:
+        inline: "{core.spacing.400}"
+      style:
+        background: "{core.color.surface.sunken}"
+        radius: "{core.radius.control}"
+        color:
+          match:
+            on: "$arguments.error"
+            cases:
+              true: "{core.color.action.destructive}"
+              false: "{core.color.text.primary}"
+
+      children:
+        - id: value
+          type: text
+          content:
+            if:
+              exists: "$arguments.value"
+            then: "$arguments.value"
+            else: "$arguments.placeholder"
+          style:
+            typography: "{core.typography.body}"
+            color:
+              if:
+                exists: "$arguments.value"
+              then: "{core.color.text.primary}"
+              else: "{core.color.text.muted}"
+
+    - id: supporting
+      type: text
+      content: "$arguments.supporting"
+      hidden:
+        if:
+          exists: "$arguments.supporting"
+        then: false
+        else: true
+      style:
+        typography: "{core.typography.caption}"
+        color:
+          match:
+            on: "$arguments.error"
+            cases:
+              true: "{core.color.action.destructive}"
+              false: "{core.color.text.secondary}"

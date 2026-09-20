@@ -1,0 +1,50 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/TagList"
+  name: "TagList"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  tags:
+    type: component[]
+    accepts:
+      protocol: Tag
+    minItems: 1
+    default:
+      - component: "com.example/Badge"
+        arguments:
+          label: YAML
+          tone: info
+          size: small
+      - component: "com.example/Badge"
+        arguments:
+          label: Tokens
+          tone: success
+          size: small
+      - component: "com.example/Badge"
+        arguments:
+          label: Nested
+          tone: warning
+          size: small
+      - component: "com.example/Badge"
+        arguments:
+          label: Collection
+          tone: neutral
+          size: small
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.tags"
+  wrap: true
+  layout:
+    axis: horizontal
+    align: center
+    gap: "{core.spacing.200}"

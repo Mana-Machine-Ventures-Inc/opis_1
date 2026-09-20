@@ -1,16 +1,25 @@
 {
   "spacing": {
+    "100": { "$type": "dimension", "$value": "4px" },
     "200": { "$type": "dimension", "$value": "8px" },
     "300": { "$type": "dimension", "$value": "12px" },
     "400": { "$type": "dimension", "$value": "16px" },
-    "500": { "$type": "dimension", "$value": "20px" }
+    "500": { "$type": "dimension", "$value": "20px" },
+    "600": { "$type": "dimension", "$value": "24px" },
+    "700": { "$type": "dimension", "$value": "32px" }
   },
   "control": {
     "height": {
       "small": { "$type": "dimension", "$value": "32px" },
       "medium": { "$type": "dimension", "$value": "40px" },
       "large": { "$type": "dimension", "$value": "48px" }
-    }
+    },
+    "toggle": {
+      "width": { "$type": "dimension", "$value": "44px" },
+      "height": { "$type": "dimension", "$value": "24px" },
+      "thumb": { "$type": "dimension", "$value": "20px" }
+    },
+    "check": { "$type": "dimension", "$value": "18px" }
   },
   "color": {
     "action": {
@@ -18,13 +27,32 @@
       "secondary": { "$type": "color", "$value": "#e2e8f0" },
       "destructive": { "$type": "color", "$value": "#dc2626" }
     },
+    "surface": {
+      "default": { "$type": "color", "$value": "#ffffff" },
+      "sunken": { "$type": "color", "$value": "#f1f5f9" },
+      "info": { "$type": "color", "$value": "#eff6ff" },
+      "success": { "$type": "color", "$value": "#f0fdf4" },
+      "warning": { "$type": "color", "$value": "#fffbeb" },
+      "danger": { "$type": "color", "$value": "#fef2f2" },
+      "inverse": { "$type": "color", "$value": "#0f172a" }
+    },
     "text": {
       "onAction": { "$type": "color", "$value": "#ffffff" },
-      "primary": { "$type": "color", "$value": "#0f172a" }
+      "primary": { "$type": "color", "$value": "#0f172a" },
+      "secondary": { "$type": "color", "$value": "#475569" },
+      "muted": { "$type": "color", "$value": "#94a3b8" }
+    },
+    "line": { "$type": "color", "$value": "#e2e8f0" },
+    "accent": {
+      "success": { "$type": "color", "$value": "#16a34a" },
+      "warning": { "$type": "color", "$value": "#d97706" },
+      "info": { "$type": "color", "$value": "#2563eb" }
     }
   },
   "radius": {
-    "control": { "$type": "dimension", "$value": "8px" }
+    "control": { "$type": "dimension", "$value": "8px" },
+    "card": { "$type": "dimension", "$value": "12px" },
+    "full": { "$type": "dimension", "$value": "999px" }
   },
   "typography": {
     "button": {
@@ -32,6 +60,46 @@
       "$value": {
         "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
         "fontSize": "14px",
+        "fontWeight": 600,
+        "lineHeight": "1.2",
+        "letterSpacing": "0.01em"
+      }
+    },
+    "heading": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "20px",
+        "fontWeight": 650,
+        "lineHeight": "1.25",
+        "letterSpacing": "-0.02em"
+      }
+    },
+    "body": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "14px",
+        "fontWeight": 400,
+        "lineHeight": "1.45",
+        "letterSpacing": "0"
+      }
+    },
+    "caption": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "12px",
+        "fontWeight": 400,
+        "lineHeight": "1.35",
+        "letterSpacing": "0.01em"
+      }
+    },
+    "label": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "13px",
         "fontWeight": 600,
         "lineHeight": "1.2",
         "letterSpacing": "0.01em"

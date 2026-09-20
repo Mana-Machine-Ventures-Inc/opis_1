@@ -1,0 +1,96 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Comment"
+  name: "Comment"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  initials:
+    type: string
+    default: "AC"
+    role: content
+
+  author:
+    type: string
+    default: "Ada Clark"
+    role: content
+
+  body:
+    type: string
+    default: "The nested collection is the interesting part — replies are Comments that embed Comments."
+    role: content
+
+  replies:
+    type: component[]
+    optional: true
+    accepts:
+      protocol: Comment
+    default: []
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.300}"
+  width:
+    mode: fill
+
+  children:
+    - id: item
+      type: stack
+      axis: horizontal
+      align: start
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+
+      children:
+        - id: avatar
+          type: component
+          component: "com.example/Avatar"
+          arguments:
+            initials: "$arguments.initials"
+            size: small
+            tone: secondary
+
+        - id: copy
+          type: stack
+          axis: vertical
+          align: start
+          gap: "{core.spacing.100}"
+          width:
+            mode: fill
+
+          children:
+            - id: author
+              type: text
+              content: "$arguments.author"
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+            - id: body
+              type: text
+              content: "$arguments.body"
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.secondary}"
+
+    - id: thread
+      type: collection
+      source: "$arguments.replies"
+      layout:
+        axis: vertical
+        gap: "{core.spacing.300}"
+      padding:
+        left: "{core.spacing.700}"
+      width:
+        mode: fill

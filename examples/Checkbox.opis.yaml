@@ -1,0 +1,88 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Checkbox"
+  name: "Checkbox"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  checked:
+    type: boolean
+    default: false
+    role: state
+
+  label:
+    type: string
+    default: "Send me updates"
+    role: content
+
+  disabled:
+    type: boolean
+    default: false
+    role: state
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  gap: "{core.spacing.300}"
+
+  children:
+    - id: box
+      type: stack
+      axis: horizontal
+      align: center
+      distribution: center
+      width:
+        mode: fixed
+        value: "{core.control.check}"
+      height:
+        mode: fixed
+        value: "{core.control.check}"
+      style:
+        background:
+          match:
+            on: "$arguments.checked"
+            cases:
+              true: "{core.color.action.primary}"
+              false: "{core.color.surface.sunken}"
+        radius: 4
+        stroke:
+          match:
+            on: "$arguments.checked"
+            cases:
+              true: "{core.color.action.primary}"
+              false: "{core.color.text.muted}"
+        color: "{core.color.text.onAction}"
+        opacity:
+          match:
+            on: "$arguments.disabled"
+            cases:
+              true: 0.45
+              false: 1
+
+      children:
+        - id: mark
+          type: slot
+          source:
+            glyph: check
+          hidden:
+            match:
+              on: "$arguments.checked"
+              cases:
+                true: false
+                false: true
+
+    - id: label
+      type: text
+      content: "$arguments.label"
+      style:
+        typography: "{core.typography.body}"
+        color: "{core.color.text.primary}"

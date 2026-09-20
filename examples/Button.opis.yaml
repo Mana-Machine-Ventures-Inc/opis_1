@@ -21,7 +21,7 @@ arguments:
 
   size:
     type: enum
-    values: [small, medium, large]
+    values: [small, medium, large, xlarge]
     default: medium
     role: variant
 
@@ -88,7 +88,7 @@ structure:
         medium:
           mode: fixed
           value: "{core.control.height.medium}"
-        large:
+        large, xlarge:
           mode: fixed
           value: "{core.control.height.large}"
 
@@ -108,7 +108,7 @@ structure:
               medium:
                 mode: fixed
                 value: "{core.control.height.medium}"
-              large:
+              large, xlarge:
                 mode: fixed
                 value: "{core.control.height.large}"
 
@@ -125,7 +125,7 @@ structure:
               cases:
                 small: "{core.spacing.300}"
                 medium: "{core.spacing.400}"
-                large: "{core.spacing.500}"
+                large, xlarge: "{core.spacing.500}"
 
   order:
     match:

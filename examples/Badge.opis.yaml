@@ -1,0 +1,82 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Badge"
+  name: "Badge"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  label:
+    type: string
+    default: "New"
+    role: content
+
+  tone:
+    type: enum
+    values: [neutral, info, success, warning, destructive]
+    default: info
+    role: variant
+
+  size:
+    type: enum
+    values: [small, medium]
+    default: medium
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  distribution: center
+  height:
+    match:
+      on: "$arguments.size"
+      cases:
+        small:
+          mode: fixed
+          value: 20
+        medium:
+          mode: fixed
+          value: 24
+  padding:
+    inline:
+      match:
+        on: "$arguments.size"
+        cases:
+          small: "{core.spacing.200}"
+          medium: "{core.spacing.300}"
+  style:
+    radius: "{core.radius.full}"
+    background:
+      match:
+        on: "$arguments.tone"
+        cases:
+          neutral: "{core.color.action.secondary}"
+          info: "{core.color.surface.info}"
+          success: "{core.color.surface.success}"
+          warning: "{core.color.surface.warning}"
+          destructive: "{core.color.surface.danger}"
+    color:
+      match:
+        on: "$arguments.tone"
+        cases:
+          neutral: "{core.color.text.primary}"
+          info: "{core.color.accent.info}"
+          success: "{core.color.accent.success}"
+          warning: "{core.color.accent.warning}"
+          destructive: "{core.color.action.destructive}"
+
+  children:
+    - id: label
+      type: text
+      content: "$arguments.label"
+      style:
+        typography: "{core.typography.caption}"
+        color: inherit

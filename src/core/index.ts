@@ -1,5 +1,5 @@
 export { parseOpisYaml, canonicalize } from "./parse.ts";
-export { evaluateDocument } from "./evaluate.ts";
+export { evaluateDocument, libraryFromDocuments } from "./evaluate.ts";
 export { resolveTokens } from "./tokens.ts";
 export type {
   Diagnostic,
@@ -8,3 +8,4 @@ export type {
   ResolvedInstance,
   TokenSet,
 } from "./types.ts";
+export type { ComponentLibrary, EvaluateOptions } from "./evaluate.ts";

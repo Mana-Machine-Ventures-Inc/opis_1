@@ -1,0 +1,91 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/SearchField"
+  name: "SearchField"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  query:
+    type: string
+    optional: true
+    role: content
+
+  placeholder:
+    type: string
+    default: "Search"
+    role: content
+
+  size:
+    type: enum
+    values: [small, medium, large]
+    default: medium
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  distribution: start
+  gap: "{core.spacing.200}"
+  width:
+    mode: fill
+  height:
+    match:
+      on: "$arguments.size"
+      cases:
+        small:
+          mode: fixed
+          value: "{core.control.height.small}"
+        medium:
+          mode: fixed
+          value: "{core.control.height.medium}"
+        large:
+          mode: fixed
+          value: "{core.control.height.large}"
+  padding:
+    inline: "{core.spacing.400}"
+  style:
+    background: "{core.color.surface.sunken}"
+    radius: "{core.radius.full}"
+    color: "{core.color.text.secondary}"
+
+  children:
+    - id: icon
+      type: slot
+      source:
+        glyph: search
+
+    - id: query
+      type: text
+      content:
+        if:
+          exists: "$arguments.query"
+        then: "$arguments.query"
+        else: "$arguments.placeholder"
+      width:
+        mode: fill
+      style:
+        typography: "{core.typography.body}"
+        color:
+          if:
+            exists: "$arguments.query"
+          then: "{core.color.text.primary}"
+          else: "{core.color.text.muted}"
+
+    - id: clear
+      type: slot
+      source:
+        glyph: close
+      hidden:
+        if:
+          exists: "$arguments.query"
+        then: false
+        else: true

@@ -1,0 +1,100 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Alert"
+  name: "Alert"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  tone:
+    type: enum
+    values: [info, success, warning, destructive]
+    default: info
+    role: variant
+
+  title:
+    type: string
+    default: "Update available"
+    role: content
+
+  message:
+    type: string
+    default: "A newer version of this component library is ready to install."
+    role: content
+
+  icon:
+    type: component
+    optional: true
+    role: slot
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: start
+  gap: "{core.spacing.400}"
+  width:
+    mode: fill
+  padding: "{core.spacing.400}"
+  style:
+    radius: "{core.radius.control}"
+    color:
+      match:
+        on: "$arguments.tone"
+        cases:
+          info: "{core.color.accent.info}"
+          success: "{core.color.accent.success}"
+          warning: "{core.color.accent.warning}"
+          destructive: "{core.color.action.destructive}"
+    background:
+      match:
+        on: "$arguments.tone"
+        cases:
+          info: "{core.color.surface.info}"
+          success: "{core.color.surface.success}"
+          warning: "{core.color.surface.warning}"
+          destructive: "{core.color.surface.danger}"
+
+  children:
+    - id: icon
+      type: slot
+      source:
+        if:
+          exists: "$arguments.icon"
+        then: "$arguments.icon"
+        else:
+          glyph:
+            match:
+              on: "$arguments.tone"
+              cases:
+                info: info
+                success: check
+                warning: warning
+                destructive: close
+
+    - id: copy
+      type: stack
+      axis: vertical
+      align: start
+      gap: "{core.spacing.100}"
+
+      children:
+        - id: title
+          type: text
+          content: "$arguments.title"
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.primary}"
+
+        - id: message
+          type: text
+          content: "$arguments.message"
+          style:
+            typography: "{core.typography.body}"
+            color: "{core.color.text.secondary}"

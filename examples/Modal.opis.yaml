@@ -1,0 +1,118 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Modal"
+  name: "Modal"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  icon:
+    type: component
+    optional: true
+    role: slot
+
+  title:
+    type: string
+    default: "Delete project?"
+    role: content
+
+  explainer:
+    type: string
+    optional: true
+    default: "This removes the project and its published OPIS files. This cannot be undone."
+    role: content
+
+  content:
+    type: component
+    optional: true
+    role: slot
+
+  actions:
+    type: component[]
+    accepts:
+      protocol: Action
+    minItems: 1
+    maxItems: 3
+    default:
+      - component: "com.example/Button"
+        arguments:
+          label: Cancel
+          tone: secondary
+      - component: "com.example/Button"
+        arguments:
+          label: Delete
+          tone: destructive
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.500}"
+  width:
+    mode: fill
+  maxWidth: 360
+  padding: "{core.spacing.600}"
+  style:
+    background: "{core.color.surface.default}"
+    radius: "{core.radius.card}"
+    shadow: "0 10px 30px rgba(15, 23, 42, 0.08)"
+
+  children:
+    - id: header
+      type: stack
+      axis: horizontal
+      align: start
+      distribution: start
+      gap: "{core.spacing.300}"
+
+      children:
+        - id: icon
+          type: slot
+          source: "$arguments.icon"
+
+        - id: heading
+          type: stack
+          axis: vertical
+          align: start
+          gap: "{core.spacing.100}"
+          width:
+            mode: fill
+
+          children:
+            - id: title
+              type: text
+              content: "$arguments.title"
+              style:
+                typography: "{core.typography.heading}"
+                color: "{core.color.text.primary}"
+
+            - id: explainer
+              type: text
+              content: "$arguments.explainer"
+              hidden:
+                if:
+                  exists: "$arguments.explainer"
+                then: false
+                else: true
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.secondary}"
+
+    - id: content
+      type: slot
+      source: "$arguments.content"
+
+    - id: actions
+      type: collection
+      source: "$arguments.actions"
+      layout:
+        axis: horizontal
+        distribution: end
+        gap: "{core.spacing.200}"

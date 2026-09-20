@@ -1,0 +1,120 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Form"
+  name: "Form"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  name:
+    type: string
+    optional: true
+    default: "Ada Clark"
+    role: content
+
+  email:
+    type: string
+    optional: true
+    role: content
+
+  notify:
+    type: boolean
+    default: true
+    role: state
+
+  terms:
+    type: boolean
+    default: false
+    role: state
+
+  error:
+    type: boolean
+    default: false
+    role: state
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.400}"
+  width:
+    mode: fill
+  maxWidth: 360
+  padding: "{core.spacing.500}"
+  style:
+    background: "{core.color.surface.default}"
+    radius: "{core.radius.card}"
+    shadow: "0 10px 30px rgba(15, 23, 42, 0.08)"
+
+  children:
+    - id: heading
+      type: text
+      content: Account
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: name
+      type: component
+      component: "com.example/TextField"
+      arguments:
+        label: Name
+        value: "$arguments.name"
+        placeholder: Full name
+
+    - id: email
+      type: component
+      component: "com.example/TextField"
+      arguments:
+        label: Email
+        value: "$arguments.email"
+        placeholder: name@example.com
+        error: "$arguments.error"
+        supporting:
+          match:
+            on: "$arguments.error"
+            cases:
+              true: Enter a valid work email.
+              false: null
+
+    - id: notify
+      type: component
+      component: "com.example/Toggle"
+      arguments:
+        on: "$arguments.notify"
+        label: Product emails
+
+    - id: terms
+      type: component
+      component: "com.example/Checkbox"
+      arguments:
+        checked: "$arguments.terms"
+        label: I agree to the interface contract
+
+    - id: actions
+      type: stack
+      axis: horizontal
+      distribution: end
+      gap: "{core.spacing.200}"
+
+      children:
+        - id: cancel
+          type: component
+          component: "com.example/Button"
+          arguments:
+            label: Cancel
+            tone: secondary
+
+        - id: save
+          type: component
+          component: "com.example/Button"
+          arguments:
+            label: Save
+            tone: primary

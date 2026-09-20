@@ -1,0 +1,136 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Tabs"
+  name: "Tabs"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  selected:
+    type: enum
+    values: [overview, activity, settings]
+    default: overview
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.400}"
+  width:
+    mode: fill
+
+  children:
+    - id: strip
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: 0
+      style:
+        background: "{core.color.surface.sunken}"
+        radius: "{core.radius.full}"
+
+      children:
+        - id: tab-overview
+          type: stack
+          axis: horizontal
+          distribution: center
+          width:
+            mode: fill
+          padding:
+            block: "{core.spacing.200}"
+          style:
+            radius: "{core.radius.full}"
+            background:
+              match:
+                on: "$arguments.selected"
+                cases:
+                  overview: "{core.color.surface.default}"
+                  activity, settings: transparent
+
+          children:
+            - id: overview-label
+              type: text
+              content: Overview
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+        - id: tab-activity
+          type: stack
+          axis: horizontal
+          distribution: center
+          width:
+            mode: fill
+          padding:
+            block: "{core.spacing.200}"
+          style:
+            radius: "{core.radius.full}"
+            background:
+              match:
+                on: "$arguments.selected"
+                cases:
+                  activity: "{core.color.surface.default}"
+                  overview, settings: transparent
+
+          children:
+            - id: activity-label
+              type: text
+              content: Activity
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.secondary}"
+
+        - id: tab-settings
+          type: stack
+          axis: horizontal
+          distribution: center
+          width:
+            mode: fill
+          padding:
+            block: "{core.spacing.200}"
+          style:
+            radius: "{core.radius.full}"
+            background:
+              match:
+                on: "$arguments.selected"
+                cases:
+                  settings: "{core.color.surface.default}"
+                  overview, activity: transparent
+
+          children:
+            - id: settings-label
+              type: text
+              content: Settings
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.secondary}"
+
+    - id: panel
+      type: component
+      component:
+        match:
+          on: "$arguments.selected"
+          cases:
+            overview: "com.example/Card"
+            activity: "com.example/Feed"
+            settings: "com.example/Form"
+      arguments:
+        match:
+          on: "$arguments.selected"
+          cases:
+            overview:
+              title: Harbor studio
+              body: Nested Card inside a selected tab panel.
+              media: true
+              actionLabel: Open
+            activity: {}
+            settings:
+              error: false

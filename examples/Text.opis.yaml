@@ -1,0 +1,51 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Text"
+  name: "Text"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  variant:
+    type: enum
+    values: [heading, body, caption, label]
+    default: body
+    role: variant
+
+  content:
+    type: string
+    default: "The quick brown fox jumps over the lazy dog."
+    role: content
+
+  tone:
+    type: enum
+    values: [primary, secondary, muted]
+    default: primary
+    role: variant
+
+structure:
+  id: root
+  type: text
+  content: "$arguments.content"
+  style:
+    typography:
+      match:
+        on: "$arguments.variant"
+        cases:
+          heading: "{core.typography.heading}"
+          body: "{core.typography.body}"
+          caption: "{core.typography.caption}"
+          label: "{core.typography.label}"
+    color:
+      match:
+        on: "$arguments.tone"
+        cases:
+          primary: "{core.color.text.primary}"
+          secondary: "{core.color.text.secondary}"
+          muted: "{core.color.text.muted}"

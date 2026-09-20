@@ -1,0 +1,88 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Toggle"
+  name: "Toggle"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  on:
+    type: boolean
+    default: false
+    role: state
+
+  label:
+    type: string
+    default: "Airplane mode"
+    role: content
+
+  disabled:
+    type: boolean
+    default: false
+    role: state
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  gap: "{core.spacing.300}"
+
+  children:
+    - id: track
+      type: stack
+      axis: horizontal
+      align: center
+      width:
+        mode: fixed
+        value: "{core.control.toggle.width}"
+      height:
+        mode: fixed
+        value: "{core.control.toggle.height}"
+      padding: "{core.spacing.100}"
+      distribution:
+        match:
+          on: "$arguments.on"
+          cases:
+            true: end
+            false: start
+      style:
+        background:
+          match:
+            on: "$arguments.on"
+            cases:
+              true: "{core.color.action.primary}"
+              false: "{core.color.action.secondary}"
+        radius: "{core.radius.full}"
+        opacity:
+          match:
+            on: "$arguments.disabled"
+            cases:
+              true: 0.45
+              false: 1
+
+      children:
+        - id: thumb
+          type: stack
+          width:
+            mode: fixed
+            value: "{core.control.toggle.thumb}"
+          height:
+            mode: fixed
+            value: "{core.control.toggle.thumb}"
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.full}"
+
+    - id: label
+      type: text
+      content: "$arguments.label"
+      style:
+        typography: "{core.typography.body}"
+        color: "{core.color.text.primary}"

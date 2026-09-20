@@ -1301,7 +1301,18 @@ enum
 boolean
 ```
 
-Each key in `cases` MUST be a legal value of that selector.
+Each key in `cases` MUST name one legal selector value, or several legal values separated by commas.
+
+```yaml
+cases:
+  small: "{core.control.height.small}"
+  medium: "{core.control.height.medium}"
+  large, xlarge: "{core.control.height.large}"
+```
+
+`large, xlarge` is two arms that share one value. It is equivalent to writing both keys separately.
+
+A selector value MUST NOT appear in more than one `cases` key.
 
 The value of an arm MAY itself be a literal, a token reference, or another property expression.
 
@@ -1311,7 +1322,7 @@ The value of an arm MAY itself be a literal, a token reference, or another prope
 
 A `match` on an enum or boolean MUST be exhaustive.
 
-A `match` is exhaustive when every legal selector value appears as a `cases` key, or when `else` is present.
+A `match` is exhaustive when every legal selector value appears as a `cases` key, appears in a comma-separated `cases` key, or when `else` is present.
 
 A validator MUST report an inexhaustive `match` as an error.
 

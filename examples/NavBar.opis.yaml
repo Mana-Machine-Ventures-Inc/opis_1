@@ -1,0 +1,95 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/NavBar"
+  name: "NavBar"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  brand:
+    type: string
+    default: "OPIS"
+    role: content
+
+  query:
+    type: string
+    optional: true
+    role: content
+
+  dense:
+    type: boolean
+    default: false
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: horizontal
+  align: center
+  distribution: start
+  gap: "{core.spacing.400}"
+  width:
+    mode: fill
+  height:
+    match:
+      on: "$arguments.dense"
+      cases:
+        true:
+          mode: fixed
+          value: "{core.control.height.small}"
+        false:
+          mode: fixed
+          value: "{core.control.height.large}"
+  padding:
+    inline: "{core.spacing.400}"
+  style:
+    background: "{core.color.surface.inverse}"
+    color: "{core.color.text.onAction}"
+    radius: "{core.radius.control}"
+
+  children:
+    - id: brand
+      type: text
+      content: "$arguments.brand"
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.onAction}"
+
+    - id: search
+      type: component
+      component: "com.example/SearchField"
+      width:
+        mode: fill
+      arguments:
+        query: "$arguments.query"
+        placeholder: Search projects
+        size:
+          match:
+            on: "$arguments.dense"
+            cases:
+              true: small
+              false: medium
+
+    - id: actions
+      type: collection
+      source:
+        - component: "com.example/Button"
+          arguments:
+            label: Share
+            tone: secondary
+            size: small
+        - component: "com.example/Button"
+          arguments:
+            label: New
+            tone: primary
+            size: small
+      layout:
+        axis: horizontal
+        gap: "{core.spacing.200}"
+        align: center

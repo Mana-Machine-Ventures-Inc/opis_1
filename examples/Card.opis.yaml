@@ -1,0 +1,91 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Card"
+  name: "Card"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  title:
+    type: string
+    default: "Harbor studio"
+    role: content
+
+  body:
+    type: string
+    default: "A quiet workspace for writing interface contracts that survive the trip from Figma to code."
+    role: content
+
+  media:
+    type: boolean
+    default: true
+    role: variant
+
+  actionLabel:
+    type: string
+    optional: true
+    default: "Open"
+    role: content
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.400}"
+  width:
+    mode: fill
+  maxWidth: 320
+  padding: "{core.spacing.500}"
+  style:
+    background: "{core.color.surface.default}"
+    radius: "{core.radius.card}"
+    shadow: "0 10px 30px rgba(15, 23, 42, 0.08)"
+
+  children:
+    - id: media
+      type: media
+      hidden:
+        match:
+          on: "$arguments.media"
+          cases:
+            true: false
+            false: true
+      height:
+        mode: fixed
+        value: 120
+      style:
+        background: "{core.color.surface.sunken}"
+        radius: "{core.radius.control}"
+
+    - id: title
+      type: text
+      content: "$arguments.title"
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: body
+      type: text
+      content: "$arguments.body"
+      style:
+        typography: "{core.typography.body}"
+        color: "{core.color.text.secondary}"
+
+    - id: action
+      type: component
+      component: "com.example/Button"
+      arguments:
+        label: "$arguments.actionLabel"
+        tone: primary
+      hidden:
+        if:
+          exists: "$arguments.actionLabel"
+        then: false
+        else: true

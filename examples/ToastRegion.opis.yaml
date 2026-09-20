@@ -1,0 +1,46 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/ToastRegion"
+  name: "ToastRegion"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  toasts:
+    type: component[]
+    accepts:
+      protocol: Alert
+    minItems: 1
+    default:
+      - component: "com.example/Alert"
+        arguments:
+          tone: success
+          title: Published
+          message: Harbor studio is live on the token set from this file.
+      - component: "com.example/Alert"
+        arguments:
+          tone: warning
+          title: Tokens drifted
+          message: Spacing 700 is new. Downstream hosts should refresh.
+      - component: "com.example/Alert"
+        arguments:
+          tone: info
+          title: Nested eval
+          message: Each toast is an embedded Alert instance, not a stub.
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.toasts"
+  layout:
+    axis: vertical
+    gap: "{core.spacing.200}"
+  width:
+    mode: fill
+  maxWidth: 420

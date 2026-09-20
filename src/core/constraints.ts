@@ -1,4 +1,4 @@
-import { evalPredicate, isObject } from "./expressions.ts";
+import { describePredicate, evalPredicate, isObject } from "./expressions.ts";
 import type { Diagnostic, Json, OpisDocument, ResolveContext } from "./types.ts";
 
 export function applyDefaults(
@@ -51,7 +51,7 @@ export function validateArguments(
       if (!evalPredicate(def.availableWhen, ctx)) {
         diagnostics.push({
           level: "error",
-          message: `argument ${name} is not available in this configuration`,
+          message: `${name} is only available when ${describePredicate(def.availableWhen)}`,
         });
       }
     }
@@ -60,7 +60,7 @@ export function validateArguments(
       if (evalPredicate(def.forbiddenWhen, ctx)) {
         diagnostics.push({
           level: "error",
-          message: `argument ${name} is forbidden in this configuration`,
+          message: `${name} is forbidden when ${describePredicate(def.forbiddenWhen)}`,
         });
       }
     }
@@ -74,7 +74,7 @@ export function validateArguments(
       if (evalPredicate(req.when, ctx) && !evalPredicate(req.then, ctx)) {
         diagnostics.push({
           level: "error",
-          message: "required argument combination was not satisfied",
+          message: describeRequire(req.when, req.then),
         });
       }
     }
@@ -83,11 +83,23 @@ export function validateArguments(
       if (evalPredicate(constraint.forbid, ctx)) {
         diagnostics.push({
           level: "error",
-          message: "forbidden argument combination",
+          message: describeForbid(constraint.forbid),
         });
       }
     }
   }
 
   return diagnostics;
+}
+
+function describeRequire(when: Json, then: Json): string {
+  if (isObject(then) && typeof then.exists === "string") {
+    const name = then.exists.replace("$arguments.", "").replace("$environment.", "environment.");
+    return `${name} is required when ${describePredicate(when)}`;
+  }
+  return `${describePredicate(then)} is required when ${describePredicate(when)}`;
+}
+
+function describeForbid(predicate: Json): string {
+  return `Not allowed: ${describePredicate(predicate)}`;
 }

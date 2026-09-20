@@ -1,0 +1,50 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/CommentThread"
+  name: "CommentThread"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  seed:
+    type: enum
+    values: [nested, flat]
+    default: nested
+    role: variant
+
+structure:
+  id: root
+  type: component
+  component: "com.example/Comment"
+  arguments:
+    match:
+      on: "$arguments.seed"
+      cases:
+        nested:
+          initials: AC
+          author: Ada Clark
+          body: The language has to survive embedding itself.
+          replies:
+            - component: "com.example/Comment"
+              arguments:
+                initials: BK
+                author: Bo Kim
+                body: Replies are the same component, one level down.
+                replies:
+                  - component: "com.example/Comment"
+                    arguments:
+                      initials: Cy
+                      author: Cy Ortega
+                      body: And again. Depth is data, not a new type.
+                      replies: []
+        flat:
+          initials: AC
+          author: Ada Clark
+          body: A single comment with no replies.
+          replies: []

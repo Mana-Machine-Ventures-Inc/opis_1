@@ -1,0 +1,170 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/DataTable"
+  name: "DataTable"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  density:
+    type: enum
+    values: [comfortable, compact]
+    default: comfortable
+    role: variant
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  width:
+    mode: fill
+  style:
+    background: "{core.color.surface.default}"
+    radius: "{core.radius.card}"
+    stroke: "{core.color.line}"
+    overflow: clip
+
+  children:
+    - id: header
+      type: stack
+      axis: horizontal
+      align: center
+      gap: "{core.spacing.300}"
+      padding:
+        match:
+          on: "$arguments.density"
+          cases:
+            comfortable: "{core.spacing.300}"
+            compact: "{core.spacing.200}"
+      style:
+        background: "{core.color.surface.sunken}"
+
+      children:
+        - id: h-name
+          type: text
+          content: Project
+          width:
+            mode: fill
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.muted}"
+        - id: h-status
+          type: text
+          content: Status
+          width:
+            mode: fill
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.muted}"
+        - id: h-owner
+          type: text
+          content: Owner
+          width:
+            mode: fill
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.muted}"
+
+    - id: rows
+      type: collection
+      source:
+        - type: stack
+          axis: horizontal
+          align: center
+          gap: "{core.spacing.300}"
+          children:
+            - type: text
+              content: Harbor studio
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.primary}"
+            - type: component
+              component: "com.example/Badge"
+              width:
+                mode: fill
+              arguments:
+                label: Live
+                tone: success
+                size: small
+            - type: text
+              content: Ada Clark
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.secondary}"
+        - type: stack
+          axis: horizontal
+          align: center
+          gap: "{core.spacing.300}"
+          children:
+            - type: text
+              content: Atlas tokens
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.primary}"
+            - type: component
+              component: "com.example/Badge"
+              width:
+                mode: fill
+              arguments:
+                label: Draft
+                tone: warning
+                size: small
+            - type: text
+              content: Bo Kim
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.secondary}"
+        - type: stack
+          axis: horizontal
+          align: center
+          gap: "{core.spacing.300}"
+          children:
+            - type: text
+              content: Nested shells
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.primary}"
+            - type: component
+              component: "com.example/Badge"
+              width:
+                mode: fill
+              arguments:
+                label: Review
+                tone: info
+                size: small
+            - type: text
+              content: Cy Ortega
+              width:
+                mode: fill
+              style:
+                typography: "{core.typography.body}"
+                color: "{core.color.text.secondary}"
+      itemLayout:
+        padding:
+          match:
+            on: "$arguments.density"
+            cases:
+              comfortable: "{core.spacing.300}"
+              compact: "{core.spacing.200}"
+        style:
+          stroke: "{core.color.line}"
+      layout:
+        axis: vertical
+        align: stretch
