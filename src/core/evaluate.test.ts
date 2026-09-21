@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { evaluateDocument, libraryFromDocuments, parseOpisYaml } from "./index.ts";
+import { componentConformsTo, protocolRegistry } from "./protocols.ts";
 import { isObject } from "./expressions.ts";
 import type { Json, OpisDocument } from "./types.ts";
 
@@ -118,13 +119,140 @@ describe("Button evaluation", () => {
     extended.arguments!.size.values!.push("xxlarge");
     const result = evaluateDocument(
       extended,
-      { kind: "text", size: "xxlarge", label: "Continue" },
+      { kind: "text", size: "medium", label: "Continue" },
       tokens,
     );
     expect(result.instance.tree).toBeNull();
-    expect(
-      result.diagnostics.some((item) => item.message.includes("inexhaustive match")),
-    ).toBe(true);
+    expect(result.diagnostics.map((item) => item.message)).toContain(
+      "inexhaustive match on $arguments.size: missing xxlarge",
+    );
+  });
+
+  it("rejects unknown and duplicated match arms", () => {
+    const unknown = {
+      ...doc,
+      constraints: [],
+      structure: {
+        id: "root",
+        type: "stack",
+        height: {
+          match: {
+            on: "$arguments.size",
+            cases: {
+              small: 1,
+              medium: 2,
+              large: 3,
+              xlarge: 4,
+              huge: 5,
+            },
+          },
+        },
+      },
+    };
+    const unknownResult = evaluateDocument(unknown, { label: "Continue" }, tokens);
+    expect(unknownResult.diagnostics.map((item) => item.message)).toContain(
+      "unknown match arm huge on $arguments.size",
+    );
+
+    const duplicated = {
+      ...doc,
+      constraints: [],
+      structure: {
+        id: "root",
+        type: "stack",
+        height: {
+          match: {
+            on: "$arguments.size",
+            cases: {
+              small: 1,
+              medium: 2,
+              large: 3,
+              "large, xlarge": 4,
+            },
+          },
+        },
+      },
+    };
+    const duplicatedResult = evaluateDocument(duplicated, { label: "Continue" }, tokens);
+    expect(duplicatedResult.diagnostics.map((item) => item.message)).toContain(
+      "size value large appears in more than one match arm",
+    );
+  });
+
+  it("rejects duplicate node IDs", () => {
+    const duplicate = {
+      ...doc,
+      constraints: [],
+      structure: {
+        id: "root",
+        type: "stack",
+        children: [
+          { id: "label", type: "text", content: "A" },
+          { id: "label", type: "text", content: "B" },
+        ],
+      },
+    };
+    const result = evaluateDocument(duplicate, { label: "Continue" }, tokens);
+    expect(result.diagnostics.map((item) => item.message)).toContain("duplicate node ID: label");
+  });
+
+  it("enforces collection cardinality", () => {
+    const carousel = library["com.example/Carousel"];
+    const empty = evaluateDocument(carousel, { items: [] }, tokens, {}, { library });
+    expect(empty.diagnostics.map((item) => item.message)).toContain(
+      "items must have at least 1 item",
+    );
+
+    const modal = library["com.example/Modal"];
+    const crowded = evaluateDocument(
+      modal,
+      {
+        actions: [
+          { component: "com.example/Button", arguments: { label: "A" } },
+          { component: "com.example/Button", arguments: { label: "B" } },
+          { component: "com.example/Button", arguments: { label: "C" } },
+          { component: "com.example/Button", arguments: { label: "D" } },
+        ],
+      },
+      tokens,
+      {},
+      { library },
+    );
+    expect(crowded.diagnostics.map((item) => item.message)).toContain(
+      "actions must have at most 3 items",
+    );
+  });
+
+  it("lets itemLayout override a child's preferred size", () => {
+    const shelf: OpisDocument = {
+      opis: "0.1",
+      component: { id: "com.example/Shelf", name: "Shelf" },
+      arguments: {
+        items: {
+          type: "component[]",
+          minItems: 1,
+          default: [
+            {
+              type: "stack",
+              width: { mode: "fill" },
+            },
+          ],
+        },
+      },
+      structure: {
+        id: "root",
+        type: "collection",
+        source: "$arguments.items",
+        itemLayout: {
+          width: { mode: "fixed", value: 80 },
+        },
+      },
+    };
+    const result = evaluateDocument(shelf, {}, tokens);
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = result.instance.tree as { [key: string]: Json };
+    const items = Array.isArray(tree.children) ? tree.children : [];
+    expect(isObject(items[0]) && items[0].width).toEqual({ mode: "fixed", value: 80 });
   });
 
   it("lets comma-separated match arms share a value", () => {
@@ -222,6 +350,90 @@ describe("Button evaluation", () => {
     expect(isObject(items[0]) && items[0].type).toBe("instance");
   });
 
+  it("paints overlay layers back to front and defaults overflow to clip", () => {
+    const hero = library["com.example/HeroTile"];
+    const result = evaluateDocument(hero, {}, tokens, {}, { library });
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = result.instance.tree as { [key: string]: Json };
+    expect(tree.type).toBe("overlay");
+    expect(tree.overflow).toBe("clip");
+    const children = Array.isArray(tree.children) ? tree.children : [];
+    expect(children.map((child) => (isObject(child) ? child.id : null))).toEqual([
+      "artwork",
+      "shield",
+      "caption",
+    ]);
+    expect(isObject(result.painted) && isObject(result.painted.style)).toBe(true);
+    const painted = result.painted as { [key: string]: Json };
+    const layers = Array.isArray(painted.children) ? painted.children : [];
+    const shield = layers.find((layer) => isObject(layer) && layer.id === "shield");
+    expect(isObject(shield) && isObject(shield.style) && String(shield.style.background)).toContain(
+      "linear-gradient",
+    );
+  });
+
+  it("lets ContentAlbum satisfy a ContentItem collection", () => {
+    const registry = protocolRegistry(Object.values(library));
+    expect(componentConformsTo(library["com.example/AlbumTile"], "ContentItem", registry)).toBe(
+      true,
+    );
+    expect(componentConformsTo(library["com.example/ArtistTile"], "ContentItem", registry)).toBe(
+      true,
+    );
+    expect(componentConformsTo(library["com.example/Button"], "ContentItem", registry)).toBe(false);
+
+    const carousel = library["com.example/Carousel"];
+    const mixed = evaluateDocument(carousel, {}, tokens, {}, { library });
+    expect(mixed.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = mixed.instance.tree as { [key: string]: Json };
+    expect(tree.type).toBe("collection");
+    expect(tree.overflow).toBe("scroll");
+    const items = Array.isArray(tree.children) ? tree.children : [];
+    expect(items.map((item) => (isObject(item) ? item.component : null))).toEqual([
+      "com.example/HeroTile",
+      "com.example/AlbumTile",
+      "com.example/ArtistTile",
+      "com.example/AlbumTile",
+      "com.example/AlbumTile",
+      "com.example/ArtistTile",
+      "com.example/AlbumTile",
+    ]);
+
+    const rejected = evaluateDocument(
+      carousel,
+      {
+        items: [{ component: "com.example/Button", arguments: { label: "Nope" } }],
+      },
+      tokens,
+      {},
+      { library },
+    );
+    expect(rejected.diagnostics.map((item) => item.message)).toContain(
+      "Button does not conform to ContentItem (required by items)",
+    );
+  });
+
+  it("composes album and artist tiles into carousel, grid, and stack", () => {
+    const home = library["com.example/MusicHome"];
+    const result = evaluateDocument(home, {}, tokens, {}, { library });
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const kinds = new Map<string, number>();
+    walk(result.instance.tree, (node) => {
+      if (node.type === "instance" && typeof node.component === "string") {
+        kinds.set(node.component, (kinds.get(node.component) ?? 0) + 1);
+      }
+    });
+    expect(kinds.get("com.example/HeroTile")).toBe(1);
+    expect(kinds.get("com.example/Carousel")).toBe(2);
+    expect(kinds.get("com.example/ContentGrid")).toBe(1);
+    expect(kinds.get("com.example/ContentStack")).toBe(1);
+    expect(kinds.get("com.example/AlbumTile")).toBeGreaterThan(4);
+    expect(kinds.get("com.example/ArtistTile")).toBeGreaterThan(4);
+    expect(kinds.get("com.example/ContentTile")).toBe(
+      (kinds.get("com.example/AlbumTile") ?? 0) + (kinds.get("com.example/ArtistTile") ?? 0),
+    );
+  });
+
   it("resolves tokens for the renderer", () => {
     const painted = paintedOf({
       kind: "text",
@@ -231,6 +443,22 @@ describe("Button evaluation", () => {
     });
     expect(painted.height).toEqual({ mode: "fixed", value: "40px" });
     expect(isObject(painted.style) && painted.style.background).toBe("#2563eb");
+  });
+
+  it("keeps text box alignment on the text node", () => {
+    const text = library["com.example/Text"];
+    const result = evaluateDocument(
+      text,
+      { align: "end", blockAlign: "center" },
+      tokens,
+      {},
+      { library },
+    );
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = result.instance.tree as { [key: string]: Json };
+    expect(tree.type).toBe("text");
+    expect(tree.width).toEqual({ mode: "fill" });
+    expect(tree.alignment).toEqual({ inline: "end", block: "center" });
   });
 });
 

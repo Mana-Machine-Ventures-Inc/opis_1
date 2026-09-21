@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 
 function opisSavePlugin(): Plugin {
@@ -46,6 +46,25 @@ function opisSavePlugin(): Plugin {
           );
         });
       });
+    },
+    handleHotUpdate(ctx) {
+      const file = ctx.file.replaceAll("\\", "/");
+      const yaml = file.match(/\/examples\/([^/]+)\.opis\.yaml$/);
+      const isTokens = file.endsWith("/examples/core.tokens.json");
+      if (!yaml && !isTokens) return;
+      const name = isTokens ? "tokens" : yaml![1];
+      void ctx.read().then((body) => {
+        ctx.server.ws.send({
+          type: "custom",
+          event: "opis-update",
+          data: {
+            kind: isTokens ? "tokens" : "yaml",
+            name: isTokens ? "tokens" : basename(name),
+            body,
+          },
+        });
+      });
+      return [];
     },
   };
 }

@@ -6,6 +6,13 @@ component:
   name: "Badge"
   version: "1.0.0"
 
+protocols:
+  Tag:
+    description: "A compact labeled chip."
+
+conformsTo:
+  - Tag
+
 imports:
   tokens:
     - namespace: core

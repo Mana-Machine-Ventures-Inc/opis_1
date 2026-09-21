@@ -1,0 +1,119 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+protocols:
+  ContentItem:
+    description: "Artwork plus a title, suitable for carousels, grids, and stacks."
+
+component:
+  id: "com.example/ContentTile"
+  name: "ContentTile"
+  version: "1.0.0"
+
+conformsTo:
+  - ContentItem
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  title:
+    type: string
+    default: "Night Harbor"
+    role: content
+
+  subtitle:
+    type: string
+    optional: true
+    default: "Ada Clark"
+    role: content
+
+  initials:
+    type: string
+    optional: true
+    default: "NH"
+    role: content
+
+  shape:
+    type: enum
+    values: [square, round]
+    default: square
+    role: variant
+
+  cover:
+    type: enum
+    values: [amber, rose, teal, indigo, olive, plum]
+    default: amber
+    role: content
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.100}"
+  width:
+    mode: fixed
+    value: 140
+
+  children:
+    - id: artwork
+      type: media
+      width:
+        mode: fill
+      aspectRatio: 1
+      style:
+        background:
+          match:
+            on: "$arguments.cover"
+            cases:
+              amber: "{core.color.cover.amber}"
+              rose: "{core.color.cover.rose}"
+              teal: "{core.color.cover.teal}"
+              indigo: "{core.color.cover.indigo}"
+              olive: "{core.color.cover.olive}"
+              plum: "{core.color.cover.plum}"
+        radius:
+          match:
+            on: "$arguments.shape"
+            cases:
+              square: "{core.radius.card}"
+              round: "{core.radius.full}"
+      children:
+        - id: monogram
+          type: text
+          content: "$arguments.initials"
+          hidden:
+            match:
+              on: "$arguments.shape"
+              cases:
+                square: true
+                round: false
+          style:
+            typography: "{core.typography.heading}"
+            color: "{core.color.text.onAction}"
+
+    - id: title
+      type: text
+      content: "$arguments.title"
+      width:
+        mode: fill
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.primary}"
+
+    - id: subtitle
+      type: text
+      content: "$arguments.subtitle"
+      width:
+        mode: fill
+      hidden:
+        if:
+          exists: "$arguments.subtitle"
+        then: false
+        else: true
+      style:
+        typography: "{core.typography.caption}"
+        color: "{core.color.text.secondary}"

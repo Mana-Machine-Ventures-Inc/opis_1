@@ -56,8 +56,13 @@ structure:
   children:
     - id: heading
       type: text
-      content: Account
+      content: Account Name
+      width:
+        mode: fill
+      padding: "{core.spacing.300}"
       style:
+        background: "{core.color.surface.sunken}"
+        radius: "{core.radius.control}"
         typography: "{core.typography.heading}"
         color: "{core.color.text.primary}"
 

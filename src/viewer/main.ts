@@ -17,12 +17,13 @@ const exampleNames = Object.keys(catalog).sort((a, b) => {
   return a.localeCompare(b);
 });
 
-let selectedExample = exampleNames.includes("Button") ? "Button" : exampleNames[0];
+const EXAMPLE_KEY = "opis.selectedExample";
+let selectedExample = readStoredExample() ?? (exampleNames.includes("Button") ? "Button" : exampleNames[0]);
 let source = catalog[selectedExample] ?? "";
 let tokensText = tokenSource;
 let tokenSet: TokenSet = { core: JSON.parse(tokenSource) as Json };
 let lastGoodTokens = tokenSet;
-let irTab: "canonical" | "resolved" | "painted" = "resolved";
+let irTab: "canonical" | "resolved" | "painted" | "tokens" = "resolved";
 let lastGood: OpisDocument = parseOpisYaml(source);
 let supplied: Record<string, Json> = seedSupplied(lastGood);
 let lastArgSignature = "";
@@ -35,54 +36,50 @@ const root = app;
 
 root.innerHTML = `
   <div class="shell">
-    <div class="header">
-      <div class="header-row">
-        <h1 data-title></h1>
-        <label class="example-picker">Example
-          <select data-example>
-            ${exampleNames.map((name) => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join("")}
-          </select>
-        </label>
+    <div class="chrome">
+      <div class="header">
+        <div class="header-row">
+          <h1 data-title></h1>
+          <label class="example-picker">Example
+            <select data-example>
+              ${exampleNames.map((name) => `<option value="${escapeAttr(name)}">${escapeHtml(name)}</option>`).join("")}
+            </select>
+          </label>
+        </div>
+        <p>Edit YAML on the left. The resolved tree and renderer update immediately.</p>
       </div>
-      <p>Edit the YAML, tokens, and arguments. The render updates immediately.</p>
+      <form class="controls" data-controls></form>
+      <p class="banner" data-banner hidden></p>
     </div>
-    <div class="pipeline">
-      <span>live YAML</span>
-      <span>live tokens</span>
-      <span>canonical JSON</span>
-      <span>evaluate match / if</span>
-      <span>resolved tree</span>
-      <span>HTML renderer</span>
-    </div>
-    <form class="controls" data-controls></form>
-    <section class="matrix" data-matrix-section hidden>
-      <h2 data-matrix-title></h2>
-      <div class="matrix-grid" data-matrix></div>
-    </section>
-    <p class="banner" data-banner hidden></p>
-    <div class="stage">
-      <section class="panel">
+    <div class="workspace">
+      <section class="panel panel-yaml">
         <header>Source YAML</header>
         <textarea data-yaml spellcheck="false"></textarea>
       </section>
-      <section class="panel">
-        <header>Tokens JSON</header>
-        <textarea data-tokens spellcheck="false"></textarea>
-      </section>
-      <section class="panel">
+      <section class="panel panel-ir">
         <header>
           Intermediate
           <div class="tabs">
             <button type="button" data-tab="canonical">Canonical</button>
             <button type="button" data-tab="resolved" aria-pressed="true">Resolved</button>
             <button type="button" data-tab="painted">Tokens in</button>
+            <button type="button" data-tab="tokens">Tokens JSON</button>
           </div>
         </header>
-        <pre data-ir></pre>
+        <div class="panel-body">
+          <pre data-ir></pre>
+          <textarea data-tokens spellcheck="false" hidden></textarea>
+        </div>
       </section>
-      <section class="panel">
-        <header>Renderer</header>
-        <div class="preview-body" data-preview></div>
+      <section class="column-output">
+        <section class="panel panel-preview">
+          <header>Renderer</header>
+          <div class="preview-body" data-preview></div>
+        </section>
+        <section class="matrix" data-matrix-section hidden>
+          <h2 data-matrix-title></h2>
+          <div class="matrix-grid" data-matrix></div>
+        </section>
       </section>
     </div>
   </div>
@@ -136,6 +133,7 @@ exampleField.addEventListener("change", () => {
   if (!catalog[next]) return;
   flushSave();
   selectedExample = next;
+  storeSelectedExample(next);
   source = catalog[next];
   yamlField.value = source;
   lastGood = parseOpisYaml(source);
@@ -168,16 +166,8 @@ for (const button of root.querySelectorAll<HTMLButtonElement>("[data-tab]")) {
 }
 
 if (import.meta.hot) {
-  import.meta.hot.accept("../../examples/core.tokens.json?raw", (mod) => {
-    if (!mod) return;
-    if (ignoreHmr.has("tokens")) {
-      ignoreHmr.delete("tokens");
-      return;
-    }
-    if (document.activeElement === tokensField) return;
-    tokensText = mod.default as string;
-    tokensField.value = tokensText;
-    refresh({ rebuildControls: false });
+  import.meta.hot.on("opis-update", (payload: { kind: "yaml" | "tokens"; name: string; body: string }) => {
+    applyExternalUpdate(payload);
   });
 }
 
@@ -215,6 +205,47 @@ function catalogFromGlob(modules: Record<string, string>): Record<string, string
   return out;
 }
 
+function readStoredExample(): string | null {
+  try {
+    const stored = sessionStorage.getItem(EXAMPLE_KEY);
+    if (stored && catalog[stored]) return stored;
+  } catch {
+    // private mode
+  }
+  return null;
+}
+
+function storeSelectedExample(name: string) {
+  try {
+    sessionStorage.setItem(EXAMPLE_KEY, name);
+  } catch {
+    // private mode
+  }
+}
+
+function applyExternalUpdate(payload: { kind: "yaml" | "tokens"; name: string; body: string }) {
+  if (payload.kind === "tokens") {
+    if (ignoreHmr.has("tokens") || document.activeElement === tokensField) {
+      ignoreHmr.delete("tokens");
+      return;
+    }
+    tokensText = payload.body;
+    tokensField.value = tokensText;
+    refresh({ rebuildControls: false });
+    return;
+  }
+
+  catalog[payload.name] = payload.body;
+  if (payload.name !== selectedExample) return;
+  if (ignoreHmr.has("yaml") || document.activeElement === yamlField) {
+    ignoreHmr.delete("yaml");
+    return;
+  }
+  source = payload.body;
+  yamlField.value = source;
+  scheduleRefresh();
+}
+
 function onControls() {
   supplied = argsFromForm(controlsForm, lastGood);
   refresh({ rebuildControls: false });
@@ -247,11 +278,19 @@ function flushSave() {
   pendingSave = null;
   if (!payload) return;
   ignoreHmr.add(payload.kind);
+  window.setTimeout(() => ignoreHmr.delete(payload.kind), 1500);
   const query =
     payload.kind === "yaml"
       ? `file=yaml&name=${encodeURIComponent(payload.name)}`
       : "file=tokens";
-  void fetch(`/__opis/save?${query}`, { method: "POST", body: payload.body });
+  void fetch(`/__opis/save?${query}`, { method: "POST", body: payload.body }).then(
+    (response) => {
+      if (!response.ok) ignoreHmr.delete(payload.kind);
+    },
+    () => {
+      ignoreHmr.delete(payload.kind);
+    },
+  );
 }
 
 function refresh(options: { rebuildControls: boolean }) {
@@ -289,9 +328,7 @@ function refresh(options: { rebuildControls: boolean }) {
     syncControlAvailability(doc);
   }
 
-  for (const button of root.querySelectorAll<HTMLButtonElement>("[data-tab]")) {
-    button.setAttribute("aria-pressed", String(button.dataset.tab === irTab));
-  }
+  syncIrTab();
 
   const notices = [parseError, tokenError].filter((item): item is string => item != null);
   if (parseError) {
@@ -532,6 +569,15 @@ function select(name: string, values: string[], current: string, disabled = fals
       ${values.map((item) => `<option value="${escapeAttr(item)}" ${item === current ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
     </select>
   </label>`;
+}
+
+function syncIrTab() {
+  const showTokens = irTab === "tokens";
+  irOut.hidden = showTokens;
+  tokensField.hidden = !showTokens;
+  for (const button of root.querySelectorAll<HTMLButtonElement>("[data-tab]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.tab === irTab));
+  }
 }
 
 function irText(result: ReturnType<typeof evaluateDocument>, invalid: boolean): string {

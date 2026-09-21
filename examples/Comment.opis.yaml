@@ -6,6 +6,13 @@ component:
   name: "Comment"
   version: "1.0.0"
 
+protocols:
+  Comment:
+    description: "A comment that may contain nested comment replies."
+
+conformsTo:
+  - Comment
+
 imports:
   tokens:
     - namespace: core

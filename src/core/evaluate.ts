@@ -41,7 +41,7 @@ export function evaluateDocument(
       supplied: suppliedNames,
       environment,
     };
-    const diagnostics = validateArguments(doc, ctx);
+    const diagnostics = validateArguments(doc, ctx, options.library);
     const errors = diagnostics.filter((item) => item.level === "error");
     if (errors.length > 0) {
       return {
@@ -214,13 +214,17 @@ function expandStructure(node: Json): Json {
     }
   }
 
+  if (next.type === "overlay" && next.overflow == null) {
+    next.overflow = "clip";
+  }
+
   if (next.type === "collection" && Array.isArray(next.source)) {
     const itemLayout = isObject(next.itemLayout) ? next.itemLayout : {};
     const baseId = typeof next.id === "string" ? next.id : "item";
     next.children = next.source.map((item, index) => {
       const child = collectionChild(item, `${baseId}-${index}`);
       for (const [key, value] of Object.entries(itemLayout)) {
-        if (child[key] == null) child[key] = value;
+        child[key] = value;
       }
       return expandStructure(child);
     });

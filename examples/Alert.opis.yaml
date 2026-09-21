@@ -6,6 +6,13 @@ component:
   name: "Alert"
   version: "1.0.0"
 
+protocols:
+  Alert:
+    description: "A status message that can appear in a toast region."
+
+conformsTo:
+  - Alert
+
 imports:
   tokens:
     - namespace: core

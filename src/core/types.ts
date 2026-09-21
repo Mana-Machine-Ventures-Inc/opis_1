@@ -28,18 +28,29 @@ export type ArgumentDefinition = {
   forbiddenWhen?: Json;
 };
 
+export type ProtocolDefinition = {
+  id?: string;
+  name?: string;
+  description?: string;
+  conformsTo?: string[];
+  requires?: Json;
+};
+
 export type OpisDocument = {
   $schema?: string;
   opis: string;
+  protocols?: Record<string, ProtocolDefinition> | ProtocolDefinition[];
   component: {
     id: string;
     name: string;
     version?: string;
   };
+  conformsTo?: string[];
   imports?: {
     tokens?: Array<{ namespace: string; source: string }>;
   };
   arguments?: Record<string, ArgumentDefinition>;
+  environment?: Record<string, ArgumentDefinition>;
   constraints?: Json[];
   structure: { [key: string]: Json };
 };

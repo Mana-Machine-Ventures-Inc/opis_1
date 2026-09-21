@@ -1,0 +1,211 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/MusicHome"
+  name: "MusicHome"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  libraryTitle:
+    type: string
+    default: "Your library"
+    role: content
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.600}"
+  width:
+    mode: fill
+
+  children:
+    - id: featured
+      type: component
+      component: "com.example/HeroTile"
+      width:
+        mode: fill
+      arguments:
+        size: featured
+        title: Night Harbor
+        artist: Ada Clark
+        cover: amber
+
+    - id: recentsHeading
+      type: text
+      content: "Recently played"
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: recents
+      type: component
+      component: "com.example/Carousel"
+      width:
+        mode: fill
+      arguments:
+        density: standard
+        items:
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Night Harbor
+              artist: Ada Clark
+              initials: NH
+              cover: amber
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Glass Tokens
+              artist: Harbor studio
+              initials: GT
+              cover: teal
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Nested Light
+              artist: Cypress
+              initials: NL
+              cover: indigo
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Quiet Interface
+              artist: Atlas
+              initials: QI
+              cover: plum
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Drift
+              artist: BK
+              initials: DR
+              cover: olive
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Second Shore
+              artist: Ada Clark
+              initials: SS
+              cover: rose
+
+    - id: artistsHeading
+      type: text
+      content: "Artists"
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: artists
+      type: component
+      component: "com.example/Carousel"
+      width:
+        mode: fill
+      arguments:
+        density: compact
+        items:
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Ada Clark
+              initials: AC
+              cover: rose
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Harbor studio
+              initials: HS
+              cover: teal
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Cypress
+              initials: Cy
+              cover: indigo
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Atlas
+              initials: At
+              cover: amber
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: BK
+              initials: BK
+              cover: olive
+
+    - id: libraryHeading
+      type: text
+      content: "$arguments.libraryTitle"
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: library
+      type: component
+      component: "com.example/ContentGrid"
+      width:
+        mode: fill
+      arguments:
+        items:
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Night Harbor
+              artist: Ada Clark
+              initials: NH
+              cover: amber
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Ada Clark
+              initials: AC
+              cover: rose
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Glass Tokens
+              artist: Harbor studio
+              initials: GT
+              cover: teal
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Cypress
+              initials: Cy
+              cover: indigo
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Nested Light
+              artist: Cypress
+              initials: NL
+              cover: indigo
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Quiet Interface
+              artist: Atlas
+              initials: QI
+              cover: plum
+
+    - id: upNextHeading
+      type: text
+      content: "Up next"
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: upNext
+      type: component
+      component: "com.example/ContentStack"
+      arguments:
+        items:
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Night Harbor
+              artist: Ada Clark
+              initials: NH
+              cover: amber
+          - component: "com.example/AlbumTile"
+            arguments:
+              title: Drift
+              artist: BK
+              initials: DR
+              cover: olive
+          - component: "com.example/ArtistTile"
+            arguments:
+              name: Harbor studio
+              initials: HS
+              cover: teal

@@ -38,7 +38,7 @@ arguments:
     accepts:
       protocol: Action
     minItems: 1
-    maxItems: 3
+    maxItems: 1
     default:
       - component: "com.example/Button"
         arguments:

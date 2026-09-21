@@ -1,0 +1,55 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+protocols:
+  ContentArtist:
+    description: "An artist that may appear wherever a ContentItem is accepted."
+    conformsTo:
+      - ContentItem
+
+component:
+  id: "com.example/ArtistTile"
+  name: "ArtistTile"
+  version: "1.0.0"
+
+conformsTo:
+  - ContentArtist
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  name:
+    type: string
+    default: "Ada Clark"
+    role: content
+
+  initials:
+    type: string
+    default: "AC"
+    role: content
+
+  detail:
+    type: string
+    optional: true
+    default: "Artist"
+    role: content
+
+  cover:
+    type: enum
+    values: [amber, rose, teal, indigo, olive, plum]
+    default: rose
+    role: content
+
+structure:
+  id: root
+  type: component
+  component: "com.example/ContentTile"
+  arguments:
+    title: "$arguments.name"
+    subtitle: "$arguments.detail"
+    initials: "$arguments.initials"
+    shape: round
+    cover: "$arguments.cover"

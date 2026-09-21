@@ -1,0 +1,53 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/ContentStack"
+  name: "ContentStack"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  items:
+    type: component[]
+    accepts:
+      protocol: ContentItem
+    minItems: 1
+    default:
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Night Harbor
+          artist: Ada Clark
+          initials: NH
+          cover: amber
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Glass Tokens
+          artist: Harbor studio
+          initials: GT
+          cover: teal
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Cypress
+          initials: Cy
+          cover: indigo
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Quiet Interface
+          artist: Atlas
+          initials: QI
+          cover: plum
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.items"
+  layout:
+    axis: vertical
+    align: start
+    distribution: start
+    gap: "{core.spacing.400}"

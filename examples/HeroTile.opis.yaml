@@ -1,0 +1,129 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/HeroTile"
+  name: "HeroTile"
+  version: "1.0.0"
+
+conformsTo:
+  - ContentAlbum
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  title:
+    type: string
+    default: "Night Harbor"
+    role: content
+
+  artist:
+    type: string
+    default: "Ada Clark"
+    role: content
+
+  cover:
+    type: enum
+    values: [amber, rose, teal, indigo, olive, plum]
+    default: amber
+    role: content
+
+  size:
+    type: enum
+    values: [tile, featured]
+    default: tile
+    role: variant
+
+structure:
+  id: root
+  type: overlay
+  alignment:
+    inline: start
+    block: end
+  width:
+    match:
+      on: "$arguments.size"
+      cases:
+        tile:
+          mode: fixed
+          value: 140
+        featured:
+          mode: fill
+  aspectRatio:
+    match:
+      on: "$arguments.size"
+      cases:
+        tile: 1
+        featured: 1.7778
+  style:
+    radius: "{core.radius.card}"
+
+  children:
+    - id: artwork
+      type: media
+      width:
+        mode: fill
+      height:
+        mode: fill
+      style:
+        background:
+          match:
+            on: "$arguments.cover"
+            cases:
+              amber: "{core.color.cover.amber}"
+              rose: "{core.color.cover.rose}"
+              teal: "{core.color.cover.teal}"
+              indigo: "{core.color.cover.indigo}"
+              olive: "{core.color.cover.olive}"
+              plum: "{core.color.cover.plum}"
+
+    - id: shield
+      type: stack
+      width:
+        mode: fill
+      height:
+        mode: fill
+      style:
+        background: "{core.gradient.scrim}"
+
+    - id: caption
+      type: stack
+      axis: vertical
+      align: start
+      gap: "{core.spacing.100}"
+      width:
+        mode: fill
+      padding:
+        match:
+          on: "$arguments.size"
+          cases:
+            tile: "{core.spacing.300}"
+            featured: "{core.spacing.500}"
+
+      children:
+        - id: title
+          type: text
+          content: "$arguments.title"
+          width:
+            mode: fill
+          style:
+            typography:
+              match:
+                on: "$arguments.size"
+                cases:
+                  tile: "{core.typography.label}"
+                  featured: "{core.typography.heading}"
+            color: "{core.color.text.onAction}"
+
+        - id: artist
+          type: text
+          content: "$arguments.artist"
+          width:
+            mode: fill
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.onAction}"
+            opacity: 0.85

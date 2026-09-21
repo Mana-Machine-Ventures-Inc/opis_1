@@ -20,6 +20,7 @@ OPIS defines:
 - component composition,
 - nested structure,
 - collections,
+- overlays,
 - layout,
 - sizing,
 - property expressions,
@@ -136,7 +137,8 @@ Component
 │   ├── Nodes
 │   ├── Component instances
 │   ├── Slots
-│   └── Collections
+│   ├── Collections
+│   └── Overlays
 ├── Layout
 └── Property expressions
 ```
@@ -205,6 +207,7 @@ The following top-level properties are defined:
 | `protocols` | MAY | Protocols declared by the document |
 | `arguments` | MAY | Component inputs |
 | `conformsTo` | MAY | Protocols implemented by the component |
+| `environment` | MAY | Declared host environment values |
 | `constraints` | MAY | Validity rules |
 | `structure` | MUST | Component structure |
 | `extensions` | MAY | Vendor or experimental metadata |
@@ -541,6 +544,32 @@ conformsTo:
   - CarouselItem
 ```
 
+A protocol MAY itself conform to another protocol.
+
+```yaml
+protocols:
+  ContentItem:
+    description: "Artwork plus a title, suitable for carousels, grids, and stacks."
+
+  ContentAlbum:
+    description: "An album that may appear wherever a ContentItem is accepted."
+    conformsTo:
+      - ContentItem
+
+  ContentArtist:
+    description: "An artist that may appear wherever a ContentItem is accepted."
+    conformsTo:
+      - ContentItem
+```
+
+A component that conforms to `ContentAlbum` also conforms to `ContentItem`.
+
+Conformance is transitive.
+
+A validator MUST accept a participant that conforms to the required protocol directly, or through a protocol that itself conforms to the required protocol.
+
+A validator MUST reject a participant that does not conform.
+
 ---
 
 # 19. Protocol identity
@@ -626,10 +655,11 @@ Node IDs MUST be unique within a component.
 
 # 23. Node types
 
-OPIS 0.1 defines six core structural node types:
+OPIS 0.1 defines seven core structural node types:
 
 ```text
 stack
+overlay
 text
 component
 slot
@@ -665,7 +695,7 @@ A stack MAY contain arbitrary OPIS nodes.
 
 # 25. Text nodes
 
-A `text` node represents textual content.
+A `text` node is a box that contains a text run.
 
 ```yaml
 - id: label
@@ -674,6 +704,51 @@ A `text` node represents textual content.
 ```
 
 Its content MAY reference a string argument.
+
+The box MAY be larger than the glyphs. `width` and `height` size the box. When a dimension is omitted or `intrinsic`, the box hugs the text on that axis.
+
+Glyphs are placed inside the box with `alignment`. This is not stack `align`, and it does not require a wrapper stack.
+
+```yaml
+- id: heading
+  type: text
+  content: Account Name
+  width:
+    mode: fill
+  alignment:
+    inline: end
+    block: start
+  style:
+    typography: "{core.typography.heading}"
+    color: "{core.color.text.primary}"
+```
+
+`alignment.inline` legal values:
+
+```text
+start
+center
+end
+justify
+```
+
+`alignment.block` legal values:
+
+```text
+start
+center
+end
+```
+
+If `alignment` is omitted, both axes default to `start`.
+
+If the box hugs the text on an axis, alignment on that axis has no visible effect.
+
+`justify` distributes extra inline space across wrapping lines. It requires a box wider than the unwrapped run. The last line remains `start`.
+
+On a text node, `align: end` is a shorthand for `alignment.inline: end`. If both are present, `alignment.inline` wins.
+
+`stretch` is not a text alignment value.
 
 Text presentation SHOULD use token references when possible.
 
@@ -766,7 +841,87 @@ Media argument typing may be standardized in a later version.
 
 ---
 
-# 30. Nested structure
+# 30. Overlay nodes
+
+An `overlay` places children in one shared box and paints them back to front.
+
+It is not a `stack`. Children do not take turns along an axis.
+
+```yaml
+- id: hero
+  type: overlay
+  alignment:
+    inline: start
+    block: end
+  overflow: clip
+
+  children:
+    - id: artwork
+      type: media
+      width:
+        mode: fill
+      height:
+        mode: fill
+
+    - id: shield
+      type: stack
+      width:
+        mode: fill
+      height:
+        mode: fill
+      style:
+        background: "{core.gradient.scrim}"
+
+    - id: caption
+      type: stack
+      axis: vertical
+      width:
+        mode: fill
+      padding: "{core.spacing.400}"
+```
+
+Paint order is participating child order. The first child is the back-most layer.
+
+When `order` is present on an overlay, it permutes paint order. It MUST list each child ID of that node exactly once.
+
+`gap` MUST NOT apply to an overlay.
+
+`axis` and `distribution` MUST NOT be used to mean overlay layout.
+
+If `overflow` is omitted on an overlay, it defaults to `clip`.
+
+The overlay owns the box. Typical overlays give the container a size or `aspectRatio`, let back layers `fill` that box, and keep foreground content intrinsic.
+
+`alignment` places children that do not fill an axis:
+
+```yaml
+alignment:
+  inline: start
+  block: end
+```
+
+Legal values on each axis:
+
+```text
+start
+center
+end
+stretch
+```
+
+A child with `width: fill` stretches on the inline axis regardless of `alignment.inline`.
+
+A child with `height: fill` stretches on the block axis regardless of `alignment.block`.
+
+If `alignment` is omitted, non-fill children are centered on both axes.
+
+A shield, scrim, or gradient ramp is a fill-size layer with a painted background. It is not a separate node type.
+
+OPIS 0.1 does not define freeform x/y positioning. Overlay children are aligned to the overlay box, not placed at arbitrary coordinates.
+
+---
+
+# 31. Nested structure
 
 Nodes MAY contain arbitrarily nested children where their node type permits it.
 
@@ -806,7 +961,7 @@ Nested structure is the standard method for describing composite components.
 
 ---
 
-# 31. Layout
+# 32. Layout
 
 Layout describes spatial relationships between nodes.
 
@@ -818,7 +973,9 @@ OPIS 0.1 defines:
 axis
 gap
 align
+alignment
 distribution
+wrap
 width
 height
 minWidth
@@ -829,13 +986,24 @@ padding
 aspectRatio
 overflow
 order
+itemLayout
 ```
 
-A stack MAY specify `order` as a list of child node IDs.
+On a text node, `alignment` places glyphs inside the text box. See §25.
+
+A stack or collection MAY set `wrap: true` so children continue onto additional lines.
+
+A collection MAY set `itemLayout` to impose size on each expanded child. Those constraints override the child's preferred size where specified.
+
+A stack or overlay MAY specify `order` as a list of child node IDs.
 
 When `order` is omitted, children participate in document order.
 
 When `order` is present, it MUST list each child ID of that node exactly once.
+
+On a stack, `order` is layout participation order.
+
+On an overlay, `order` is paint order. The first participating child is painted back-most.
 
 Node IDs MUST remain stable within a component version.
 
@@ -843,7 +1011,7 @@ Hidden or absent children MAY appear in `order`. They still MUST NOT participate
 
 ---
 
-# 32. Axis
+# 33. Axis
 
 A stack or collection MAY define:
 
@@ -859,21 +1027,23 @@ axis: vertical
 
 ---
 
-# 33. Gap
+# 34. Gap
 
 ```yaml
 gap: "{core.spacing.200}"
 ```
 
-A gap applies between participating children.
+A gap applies between participating children of a stack or collection.
+
+`gap` MUST NOT apply to an overlay.
 
 Absent or hidden children MUST NOT produce gap spacing.
 
 ---
 
-# 34. Alignment
+# 35. Alignment
 
-Cross-axis alignment:
+Cross-axis alignment of stack or collection children:
 
 ```yaml
 align: start
@@ -882,9 +1052,11 @@ align: end
 align: stretch
 ```
 
+This `align` does not place glyphs inside a text box. Text uses `alignment` as defined in §25.
+
 ---
 
-# 35. Distribution
+# 36. Distribution
 
 Main-axis distribution:
 
@@ -899,7 +1071,7 @@ Implementations MAY support additional values via extensions.
 
 ---
 
-# 36. Padding
+# 37. Padding
 
 Padding MAY be represented uniformly:
 
@@ -929,7 +1101,7 @@ Logical directions SHOULD be preferred where possible.
 
 ---
 
-# 37. Sizing
+# 38. Sizing
 
 OPIS supports portable sizing modes.
 
@@ -969,7 +1141,7 @@ height:
 
 ---
 
-# 38. Intrinsic sizing
+# 39. Intrinsic sizing
 
 ```yaml
 width:
@@ -982,7 +1154,7 @@ Host implementations determine the exact intrinsic-size algorithm.
 
 ---
 
-# 39. Fill sizing
+# 40. Fill sizing
 
 ```yaml
 width:
@@ -993,7 +1165,7 @@ width:
 
 ---
 
-# 40. Minimum and maximum sizing
+# 41. Minimum and maximum sizing
 
 ```yaml
 minWidth: 240
@@ -1004,7 +1176,7 @@ Values MAY reference tokens.
 
 ---
 
-# 41. Aspect ratio
+# 42. Aspect ratio
 
 ```yaml
 aspectRatio: 1.7778
@@ -1014,7 +1186,7 @@ represents approximately 16:9.
 
 ---
 
-# 42. Overflow
+# 43. Overflow
 
 OPIS 0.1 defines:
 
@@ -1032,9 +1204,11 @@ overflow: scroll
 
 Scroll direction is inferred from layout axis unless otherwise extended.
 
+If `overflow` is omitted on an overlay, it defaults to `clip`.
+
 ---
 
-# 43. Parent-imposed child layout
+# 44. Parent-imposed child layout
 
 A parent MAY impose layout constraints on collection children.
 
@@ -1073,7 +1247,7 @@ when presenting layout diagnostics.
 
 ---
 
-# 44. Visibility
+# 45. Visibility
 
 Any node MAY specify:
 
@@ -1087,7 +1261,7 @@ Hidden nodes MUST NOT participate in normal layout.
 
 ---
 
-# 45. Constraints
+# 46. Constraints
 
 Constraints define which argument configurations are valid.
 
@@ -1109,7 +1283,7 @@ constraints:
 
 ---
 
-# 46. `require`
+# 47. `require`
 
 A requirement states that when one predicate is satisfied, another predicate MUST also be satisfied.
 
@@ -1126,7 +1300,7 @@ A requirement states that when one predicate is satisfied, another predicate MUS
 
 ---
 
-# 47. `forbid`
+# 48. `forbid`
 
 A forbidden condition identifies an invalid configuration.
 
@@ -1148,7 +1322,7 @@ A conforming validator MUST report a matching forbidden condition as invalid.
 
 ---
 
-# 48. Conditional argument availability
+# 49. Conditional argument availability
 
 Arguments MAY define availability conditions.
 
@@ -1165,7 +1339,7 @@ An argument that is supplied while unavailable MUST produce a validation error.
 
 ---
 
-# 49. Conditional argument prohibition
+# 50. Conditional argument prohibition
 
 ```yaml
 label:
@@ -1187,7 +1361,7 @@ This is shorthand for an equivalent constraint.
 
 ---
 
-# 50. Property expressions
+# 51. Property expressions
 
 Valid arguments affect appearance and structure through **property expressions**.
 
@@ -1234,7 +1408,7 @@ OPIS 0.1 MUST NOT use a top-level `conditions` list, `when`/`set` patches, or do
 
 ---
 
-# 51. Independent axes
+# 52. Independent axes
 
 Independent argument dimensions compose by writing to different properties.
 
@@ -1269,7 +1443,7 @@ When two axes affect the same property, their interaction MUST be expressed as a
 
 ---
 
-# 52. `match`
+# 53. `match`
 
 `match` selects a value from a finite selector.
 
@@ -1318,7 +1492,7 @@ The value of an arm MAY itself be a literal, a token reference, or another prope
 
 ---
 
-# 53. Exhaustiveness
+# 54. Exhaustiveness
 
 A `match` on an enum or boolean MUST be exhaustive.
 
@@ -1345,7 +1519,7 @@ order:
 
 ---
 
-# 54. Nested `match`
+# 55. Nested `match`
 
 When one property depends on more than one argument, nest `match` expressions inside the property that depends on both.
 
@@ -1377,7 +1551,7 @@ Axes MUST NOT be multiplied into a document-level grid of patches.
 
 ---
 
-# 55. `if`
+# 56. `if`
 
 `if` selects between two values using a predicate.
 
@@ -1415,7 +1589,7 @@ An optional argument without a default MUST NOT be used as a `match` selector. U
 
 ---
 
-# 56. Predicates
+# 57. Predicates
 
 Predicates are used by constraints and by `if`.
 
@@ -1480,7 +1654,7 @@ A processor SHOULD be able to statically evaluate collection-count predicates wh
 
 ---
 
-# 57. Evaluation
+# 58. Evaluation
 
 Property expressions are evaluated after the component’s constraints have been satisfied.
 
@@ -1494,9 +1668,20 @@ A resolved component MUST NOT contain unresolved `match` or `if` expressions.
 
 Nested expressions are evaluated from the inside of the selected arm or branch.
 
+After a `component` node is instantiated, the resolved tree MAY represent the result as:
+
+```yaml
+type: instance
+component: "com.example/Button"
+children:
+  - ...
+```
+
+`instance` is a resolved form. It is not an authoring node type.
+
 ---
 
-# 58. No document-level overrides
+# 59. No document-level overrides
 
 The following are not part of OPIS 0.1:
 
@@ -1516,7 +1701,7 @@ A conforming implementation MUST reject a top-level `conditions` property as an 
 
 ---
 
-# 59. Authoring `when` trees
+# 60. Authoring `when` trees
 
 OPIS is an interchange representation.
 
@@ -1538,7 +1723,7 @@ Nested `when` is not a normative OPIS 0.1 construct.
 ---
 
 
-# 60. Environment
+# 61. Environment
 
 OPIS distinguishes component arguments from renderer-provided environmental context.
 
@@ -1576,7 +1761,7 @@ environment:
 
 ---
 
-# 61. Composition
+# 62. Composition
 
 OPIS favors composition over inheritance.
 
@@ -1596,7 +1781,7 @@ OPIS 0.1 does not define component inheritance.
 
 ---
 
-# 62. Open composition
+# 63. Open composition
 
 Protocols allow a parent to accept components it does not know about in advance.
 
@@ -1619,7 +1804,7 @@ This allows independently defined components to participate in the parent compos
 
 ---
 
-# 63. Example: Button
+# 64. Example: Button
 
 ```yaml
 $schema: "https://opis-spec.org/schema/0.1"
@@ -1630,6 +1815,13 @@ component:
   id: "com.example/Button"
   name: "Button"
   version: "1.0.0"
+
+protocols:
+  Action:
+    description: "A labeled control that can be placed in action collections."
+
+conformsTo:
+  - Action
 
 imports:
   tokens:
@@ -1645,7 +1837,7 @@ arguments:
 
   size:
     type: enum
-    values: [small, medium, large]
+    values: [small, medium, large, xlarge]
     default: medium
     role: variant
 
@@ -1712,7 +1904,7 @@ structure:
         medium:
           mode: fixed
           value: "{core.control.height.medium}"
-        large:
+        large, xlarge:
           mode: fixed
           value: "{core.control.height.large}"
 
@@ -1732,7 +1924,7 @@ structure:
               medium:
                 mode: fixed
                 value: "{core.control.height.medium}"
-              large:
+              large, xlarge:
                 mode: fixed
                 value: "{core.control.height.large}"
 
@@ -1749,7 +1941,7 @@ structure:
               cases:
                 small: "{core.spacing.300}"
                 medium: "{core.spacing.400}"
-                large: "{core.spacing.500}"
+                large, xlarge: "{core.spacing.500}"
 
   order:
     match:
@@ -1800,11 +1992,13 @@ structure:
 
 `size` owns `height`. `tone` owns fill and label color. `kind` and `size` interact only inside `width` and `padding`, as nested `match` expressions on those properties.
 
+`large, xlarge` is one match arm covering two size values.
+
 No top-level override list is required.
 
 ---
 
-# 64. Example: Modal
+# 65. Example: Modal
 
 ```yaml
 opis: "0.1"
@@ -1907,14 +2101,10 @@ Those are ordinary argument configurations.
 
 ---
 
-# 65. Example: Carousel
+# 66. Example: Carousel
 
 ```yaml
 opis: "0.1"
-
-protocols:
-  CarouselItem:
-    description: "A component suitable for presentation in a carousel."
 
 component:
   id: "com.example/Carousel"
@@ -1925,50 +2115,48 @@ arguments:
   items:
     type: component[]
     accepts:
-      protocol: CarouselItem
+      protocol: ContentItem
     minItems: 1
 
   density:
     type: enum
-    values:
-      - compact
-      - standard
-      - spacious
+    values: [compact, standard, spacious]
     default: standard
+    role: variant
 
 structure:
   id: root
   type: collection
   source: "$arguments.items"
+  overflow: scroll
+  width:
+    mode: fill
 
   layout:
     axis: horizontal
-    overflow: scroll
+    align: start
+    distribution: start
     gap:
       match:
         on: "$arguments.density"
         cases:
           compact: "{core.spacing.200}"
-          standard: "{core.spacing.300}"
-          spacious: "{core.spacing.500}"
-
-    padding:
-      inline: "{core.spacing.400}"
+          standard: "{core.spacing.400}"
+          spacious: "{core.spacing.600}"
 
   itemLayout:
     width:
       mode: fixed
-      value: 280
-
-    height:
-      mode: intrinsic
+      value: 140
 ```
 
-Any component conforming to `CarouselItem` may be supplied.
+Any component that conforms to `ContentItem` may be supplied, including through a more specific protocol such as `ContentAlbum` or `ContentArtist`.
+
+`HeroTile` is an overlay that still conforms to `ContentAlbum`, so it can sit in the same carousel as a plain album tile.
 
 ---
 
-# 66. Component scale
+# 67. Component scale
 
 OPIS does not distinguish between “component,” “section,” and “page” at the schema level.
 
@@ -1981,6 +2169,7 @@ SearchField
 Card
 NavigationBar
 Carousel
+HeroTile
 Modal
 SettingsSection
 ProductHeader
@@ -1995,7 +2184,7 @@ A component SHOULD remain declarative and reusable regardless of scale.
 
 ---
 
-# 67. What OPIS deliberately does not model
+# 68. What OPIS deliberately does not model
 
 A OPIS component MUST NOT contain arbitrary application logic.
 
@@ -2018,7 +2207,7 @@ Hosts MAY bind application behavior to OPIS components externally.
 
 ---
 
-# 68. Documentation boundary
+# 69. Documentation boundary
 
 OPIS MAY contain concise descriptions necessary to understand component APIs.
 
@@ -2044,7 +2233,7 @@ Those concerns SHOULD be represented by documentation systems such as DSDS or ot
 
 ---
 
-# 69. Implementation boundary
+# 70. Implementation boundary
 
 OPIS describes semantic interface structure.
 
@@ -2080,7 +2269,7 @@ Such mappings are outside OPIS 0.1.
 
 ---
 
-# 70. Canonicalization
+# 71. Canonicalization
 
 A OPIS implementation SHOULD be able to convert valid authoring YAML into a canonical resolved intermediate representation.
 
@@ -2104,7 +2293,7 @@ YAML is the recommended human-readable interchange syntax.
 
 ---
 
-# 71. Round-trip expectations
+# 72. Round-trip expectations
 
 A conforming OPIS-aware tool SHOULD preserve all standard OPIS semantics when importing and exporting a document.
 
@@ -2120,7 +2309,7 @@ If a tool cannot represent a OPIS feature, it SHOULD:
 
 ---
 
-# 72. Extensions
+# 73. Extensions
 
 Experimental or vendor-specific information SHOULD be placed under:
 
@@ -2136,7 +2325,7 @@ A conforming implementation MAY ignore extensions.
 
 ---
 
-# 73. Validation levels
+# 74. Validation levels
 
 OPIS tools SHOULD distinguish at least three classes of issue.
 
@@ -2188,7 +2377,7 @@ Advisories MUST NOT invalidate a document.
 
 ---
 
-# 74. Static analysis goals
+# 75. Static analysis goals
 
 A OPIS implementation SHOULD make the following questions answerable without arbitrary code execution:
 
@@ -2220,7 +2409,7 @@ This property is fundamental to OPIS.
 
 ---
 
-# 75. AI and tooling
+# 76. AI and tooling
 
 OPIS is intentionally suitable for machine manipulation.
 
@@ -2241,7 +2430,7 @@ Machine use does not change OPIS semantics.
 
 ---
 
-# 76. Relationship to authoring languages
+# 77. Relationship to authoring languages
 
 OPIS is a specification, not necessarily the preferred human authoring language.
 
@@ -2272,7 +2461,7 @@ OPIS itself SHOULD remain conservative and portable.
 
 ---
 
-# 77. Relationship to visual editors
+# 78. Relationship to visual editors
 
 A visual editor MAY use OPIS as:
 
@@ -2300,7 +2489,7 @@ This allows exploratory design to remain flexible while stable design decisions 
 
 ---
 
-# 78. Relationship to DTCG
+# 79. Relationship to DTCG
 
 DTCG defines design values.
 
@@ -2336,7 +2525,7 @@ OPIS MUST NOT introduce a competing generic token system.
 
 ---
 
-# 79. Relationship to documentation specifications
+# 80. Relationship to documentation specifications
 
 Documentation systems may reference OPIS components and derive structured information from them.
 
@@ -2362,7 +2551,7 @@ OPIS itself remains focused on interface definition.
 
 ---
 
-# 80. Minimal conformance
+# 81. Minimal conformance
 
 A minimum conforming OPIS 0.1 implementation MUST support:
 
@@ -2374,7 +2563,9 @@ A minimum conforming OPIS 0.1 implementation MUST support:
 - component collections,
 - structure trees,
 - stack nodes,
+- overlay nodes,
 - text nodes,
+- text box alignment,
 - component nodes,
 - slot nodes,
 - collection nodes,
@@ -2391,7 +2582,7 @@ A minimum conforming OPIS 0.1 implementation MUST support:
 
 ---
 
-# 81. Future areas
+# 82. Future areas
 
 The following are intentionally deferred:
 
@@ -2411,7 +2602,7 @@ package/dependency resolution
 component version negotiation
 responsive layout primitives
 grid layout
-overlay/absolute layout
+freeform positioned layout
 vector graphics
 rich text
 internationalization semantics
@@ -2421,7 +2612,7 @@ These MAY be standardized in later OPIS versions or companion specifications.
 
 ---
 
-# 82. Summary
+# 83. Summary
 
 OPIS defines a portable semantic contract for user-interface composition.
 
@@ -2726,6 +2917,10 @@ variable-font axes
 OpenType features
 letter spacing
 line height
+text box size
+inline alignment
+block alignment
+justification
 text shaping
 fallback behavior
 locale/script

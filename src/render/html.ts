@@ -41,16 +41,26 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
   }
 
   if (value.type === "text") {
-    const text = document.createElement("span");
+    const text = document.createElement("div");
     text.className = "opis-text";
-    text.textContent = value.content == null ? "" : String(value.content);
+    const run = document.createElement("span");
+    run.className = "opis-text-run";
+    run.textContent = value.content == null ? "" : String(value.content);
+    const inline = textInlineAlign(value);
+    const block = textBlockAlign(value);
+    run.style.width = "100%";
+    run.style.textAlign = cssTextAlign(inline);
+    text.style.display = "flex";
+    text.style.flexDirection = "column";
+    text.style.justifyContent = cssJustifyBlock(block);
     applyBox(text, value, parentAxis);
     applyStyle(text, value.style);
     if (parentAxis === "horizontal" && isObject(value.width) && value.width.mode === "fill") {
-      text.style.whiteSpace = "nowrap";
-      text.style.overflow = "hidden";
-      text.style.textOverflow = "ellipsis";
+      run.style.whiteSpace = "nowrap";
+      run.style.overflow = "hidden";
+      run.style.textOverflow = "ellipsis";
     }
+    text.append(run);
     return text;
   }
 
@@ -94,8 +104,17 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     if (value.wrap === true) box.style.flexWrap = "wrap";
   }
 
+  if (value.type === "overlay") {
+    box.style.display = "grid";
+    box.style.gridTemplate = "1fr / 1fr";
+    if (value.overflow == null) box.style.overflow = "hidden";
+  }
+
   if (value.type === "media") {
     box.setAttribute("aria-hidden", "true");
+    box.style.display = "flex";
+    box.style.alignItems = "center";
+    box.style.justifyContent = "center";
   }
 
   applyBox(box, value, parentAxis);
@@ -103,10 +122,17 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
 
   const children = participatingChildren(value);
   for (const child of children) {
-    const rendered = createNode(withInheritedMetrics(child, value), axis);
+    const rendered = createNode(
+      withInheritedMetrics(child, value),
+      value.type === "overlay" ? undefined : axis,
+    );
     if (rendered.dataset.missing === "true") continue;
     if (rendered.tagName === "SPAN" && rendered.className === "" && !rendered.textContent) {
       continue;
+    }
+    if (value.overflow === "scroll") rendered.style.flexShrink = "0";
+    if (value.type === "overlay" && isObject(child)) {
+      applyOverlayChild(rendered, child, value);
     }
     box.append(rendered);
   }
@@ -196,12 +222,42 @@ function iconSize(node: { [key: string]: Json }): number {
   return 16;
 }
 
+function applyOverlayChild(
+  el: HTMLElement,
+  child: { [key: string]: Json },
+  overlay: { [key: string]: Json },
+) {
+  el.style.gridArea = "1 / 1";
+  el.style.minWidth = "0";
+  el.style.minHeight = "0";
+  const alignment = isObject(overlay.alignment) ? overlay.alignment : {};
+  const widthFill = isObject(child.width) && child.width.mode === "fill";
+  const heightFill = isObject(child.height) && child.height.mode === "fill";
+  el.style.justifySelf = widthFill ? "stretch" : overlaySelf(alignment.inline);
+  el.style.alignSelf = heightFill ? "stretch" : overlaySelf(alignment.block);
+  if (widthFill) el.style.width = "100%";
+  if (heightFill) el.style.height = "100%";
+}
+
+function overlaySelf(value: Json | undefined): string {
+  switch (value) {
+    case "start":
+      return "start";
+    case "end":
+      return "end";
+    case "stretch":
+      return "stretch";
+    default:
+      return "center";
+  }
+}
+
 function applyBox(
   el: HTMLElement,
   node: { [key: string]: Json },
   parentAxis?: "horizontal" | "vertical",
 ) {
-  const gap = cssLength(node.gap);
+  const gap = node.type === "overlay" ? null : cssLength(node.gap);
   if (gap) el.style.gap = gap;
 
   applyPadding(el, node.padding);
@@ -227,7 +283,17 @@ function applyBox(
   if (node.aspectRatio != null) el.style.aspectRatio = String(node.aspectRatio);
   if (node.overflow != null) {
     const overflow = String(node.overflow);
-    el.style.overflow = overflow === "clip" ? "hidden" : overflow;
+    if (overflow === "scroll") {
+      el.dataset.overflow = "scroll";
+      const vertical = node.axis === "vertical";
+      el.style.overflowX = vertical ? "hidden" : "auto";
+      el.style.overflowY = vertical ? "auto" : "hidden";
+      el.style.maxWidth = el.style.maxWidth || "100%";
+      el.style.minWidth = el.style.minWidth || "0";
+      if (!vertical && node.wrap !== true) el.style.flexWrap = "nowrap";
+    } else {
+      el.style.overflow = overflow === "clip" ? "hidden" : overflow;
+    }
   }
 }
 
@@ -287,6 +353,45 @@ function applyStyle(el: HTMLElement, style: Json | undefined) {
     if (type.fontWeight != null) el.style.fontWeight = String(type.fontWeight);
     if (type.lineHeight != null) el.style.lineHeight = String(type.lineHeight);
     if (type.letterSpacing != null) el.style.letterSpacing = String(type.letterSpacing);
+  }
+}
+
+function textInlineAlign(node: { [key: string]: Json }): string {
+  if (isObject(node.alignment) && node.alignment.inline != null) {
+    return String(node.alignment.inline);
+  }
+  if (typeof node.align === "string") return node.align;
+  return "start";
+}
+
+function textBlockAlign(node: { [key: string]: Json }): string {
+  if (isObject(node.alignment) && node.alignment.block != null) {
+    return String(node.alignment.block);
+  }
+  return "start";
+}
+
+function cssTextAlign(value: string): string {
+  switch (value) {
+    case "center":
+      return "center";
+    case "end":
+      return "end";
+    case "justify":
+      return "justify";
+    default:
+      return "start";
+  }
+}
+
+function cssJustifyBlock(value: string): string {
+  switch (value) {
+    case "center":
+      return "center";
+    case "end":
+      return "flex-end";
+    default:
+      return "flex-start";
   }
 }
 

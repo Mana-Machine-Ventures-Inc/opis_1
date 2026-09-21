@@ -29,11 +29,34 @@ arguments:
     default: primary
     role: variant
 
+  align:
+    type: enum
+    values: [start, center, end, justify]
+    default: start
+    role: variant
+
+  blockAlign:
+    type: enum
+    values: [start, center, end]
+    default: start
+    role: variant
+
 structure:
   id: root
   type: text
   content: "$arguments.content"
+  width:
+    mode: fill
+  height:
+    mode: fixed
+    value: 96
+  alignment:
+    inline: "$arguments.align"
+    block: "$arguments.blockAlign"
+  padding: "{core.spacing.300}"
   style:
+    background: "{core.color.surface.sunken}"
+    radius: "{core.radius.control}"
     typography:
       match:
         on: "$arguments.variant"

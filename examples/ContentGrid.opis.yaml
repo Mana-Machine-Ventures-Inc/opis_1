@@ -1,0 +1,82 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/ContentGrid"
+  name: "ContentGrid"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  items:
+    type: component[]
+    accepts:
+      protocol: ContentItem
+    minItems: 1
+    default:
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Night Harbor
+          artist: Ada Clark
+          initials: NH
+          cover: amber
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Ada Clark
+          initials: AC
+          cover: rose
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Glass Tokens
+          artist: Harbor studio
+          initials: GT
+          cover: teal
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Cypress
+          initials: Cy
+          cover: indigo
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Nested Light
+          artist: Cypress
+          initials: NL
+          cover: indigo
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Quiet Interface
+          artist: Atlas
+          initials: QI
+          cover: plum
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Atlas
+          initials: At
+          cover: olive
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Second Shore
+          artist: Ada Clark
+          initials: SS
+          cover: rose
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.items"
+  wrap: true
+  width:
+    mode: fill
+  layout:
+    axis: horizontal
+    align: start
+    distribution: start
+    gap: "{core.spacing.400}"
+  itemLayout:
+    width:
+      mode: fixed
+      value: 140

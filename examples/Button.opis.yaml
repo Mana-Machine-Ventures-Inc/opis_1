@@ -7,6 +7,13 @@ component:
   name: "Button"
   version: "1.0.0"
 
+protocols:
+  Action:
+    description: "A labeled control that can be placed in action collections."
+
+conformsTo:
+  - Action
+
 imports:
   tokens:
     - namespace: core

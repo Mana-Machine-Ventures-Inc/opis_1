@@ -1,0 +1,54 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+protocols:
+  ContentAlbum:
+    description: "An album that may appear wherever a ContentItem is accepted."
+    conformsTo:
+      - ContentItem
+
+component:
+  id: "com.example/AlbumTile"
+  name: "AlbumTile"
+  version: "1.0.0"
+
+conformsTo:
+  - ContentAlbum
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  title:
+    type: string
+    default: "Night Harbor"
+    role: content
+
+  artist:
+    type: string
+    default: "Jake V"
+    role: content
+
+  initials:
+    type: string
+    default: "NH"
+    role: content
+
+  cover:
+    type: enum
+    values: [amber, rose, teal, indigo, olive, plum]
+    default: amber
+    role: content
+
+structure:
+  id: root
+  type: component
+  component: "com.example/ContentTile"
+  arguments:
+    title: "$arguments.title"
+    subtitle: "$arguments.artist"
+    initials: "$arguments.initials"
+    shape: square
+    cover: "$arguments.cover"

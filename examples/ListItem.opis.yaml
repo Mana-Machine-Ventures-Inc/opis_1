@@ -6,6 +6,13 @@ component:
   name: "ListItem"
   version: "1.0.0"
 
+protocols:
+  ListItem:
+    description: "A selectable row with a title."
+
+conformsTo:
+  - ListItem
+
 imports:
   tokens:
     - namespace: core

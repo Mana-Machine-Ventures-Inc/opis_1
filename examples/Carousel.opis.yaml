@@ -1,0 +1,89 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Carousel"
+  name: "Carousel"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  items:
+    type: component[]
+    accepts:
+      protocol: ContentItem
+    minItems: 1
+    default:
+      - component: "com.example/HeroTile"
+        arguments:
+          title: Night Harbor
+          artist: Ada Clark
+          cover: amber
+          size: tile
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Night Harbor
+          artist: Ada Clark
+          initials: NH
+          cover: amber
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Harbor studio
+          initials: HS
+          cover: teal
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Glass Tokens
+          artist: Harbor studio
+          initials: GT
+          cover: teal
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Nested Light
+          artist: Cypress
+          initials: NL
+          cover: indigo
+      - component: "com.example/ArtistTile"
+        arguments:
+          name: Ada Clark
+          initials: AC
+          cover: rose
+      - component: "com.example/AlbumTile"
+        arguments:
+          title: Quiet Interface
+          artist: Atlas
+          initials: QI
+          cover: plum
+
+  density:
+    type: enum
+    values: [compact, standard, spacious]
+    default: standard
+    role: variant
+
+structure:
+  id: root
+  type: collection
+  source: "$arguments.items"
+  overflow: scroll
+  width:
+    mode: fill
+  layout:
+    axis: horizontal
+    align: start
+    distribution: start
+    gap:
+      match:
+        on: "$arguments.density"
+        cases:
+          compact: "{core.spacing.200}"
+          standard: "{core.spacing.400}"
+          spacious: "{core.spacing.600}"
+  itemLayout:
+    width:
+      mode: fixed
+      value: 140

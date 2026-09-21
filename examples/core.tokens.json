@@ -47,6 +47,20 @@
       "success": { "$type": "color", "$value": "#16a34a" },
       "warning": { "$type": "color", "$value": "#d97706" },
       "info": { "$type": "color", "$value": "#2563eb" }
+    },
+    "cover": {
+      "amber": { "$type": "color", "$value": "#d97706" },
+      "rose": { "$type": "color", "$value": "#e11d48" },
+      "teal": { "$type": "color", "$value": "#0f766e" },
+      "indigo": { "$type": "color", "$value": "#4f46e5" },
+      "olive": { "$type": "color", "$value": "#65a30d" },
+      "plum": { "$type": "color", "$value": "#7e22ce" }
+    }
+  },
+  "gradient": {
+    "scrim": {
+      "$type": "gradient",
+      "$value": "linear-gradient(to top, rgba(15, 23, 42, 0.88) 0%, rgba(15, 23, 42, 0.35) 42%, rgba(15, 23, 42, 0) 100%)"
     }
   },
   "radius": {
