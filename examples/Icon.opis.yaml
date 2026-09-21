@@ -1,0 +1,38 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/Icon"
+  name: "Icon"
+  version: "1.0.0"
+
+protocols:
+  Icon:
+    description: "A glyph identified by logical name. Hosts resolve the drawing."
+
+conformsTo:
+  - Icon
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  name:
+    type: enum
+    values: [plus, search, check, close, minus, info, warning]
+    default: search
+    role: content
+
+  kind:
+    type: enum
+    values: [template, artwork]
+    default: template
+    role: variant
+
+structure:
+  id: root
+  type: icon
+  name: "$arguments.name"
+  kind: "$arguments.kind"

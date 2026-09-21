@@ -37,6 +37,8 @@ arguments:
 
   icon:
     type: component
+    accepts:
+      protocol: Icon
     optional: true
     role: slot
 
@@ -76,14 +78,16 @@ structure:
           exists: "$arguments.icon"
         then: "$arguments.icon"
         else:
-          glyph:
-            match:
-              on: "$arguments.tone"
-              cases:
-                info: info
-                success: check
-                warning: warning
-                destructive: close
+          component: "com.example/Icon"
+          arguments:
+            name:
+              match:
+                on: "$arguments.tone"
+                cases:
+                  info: info
+                  success: check
+                  warning: warning
+                  destructive: close
 
     - id: copy
       type: stack

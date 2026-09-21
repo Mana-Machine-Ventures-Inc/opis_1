@@ -1,0 +1,124 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/IconGallery"
+  name: "IconGallery"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.600}"
+  width:
+    mode: fill
+  maxWidth: 360
+  padding: "{core.spacing.500}"
+
+  children:
+    - id: catalog
+      type: stack
+      axis: horizontal
+      wrap: true
+      align: start
+      gap: "{core.spacing.400}"
+      width:
+        mode: fill
+      children:
+        - id: plus
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: plus
+        - id: search
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: search
+        - id: check
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: check
+        - id: close
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: close
+        - id: minus
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: minus
+        - id: info
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: info
+        - id: warning
+          type: component
+          component: "com.example/IconBarItem"
+          arguments:
+            name: warning
+
+    - id: inUse
+      type: stack
+      axis: vertical
+      align: stretch
+      gap: "{core.spacing.400}"
+      width:
+        mode: fill
+      children:
+        - id: searchField
+          type: component
+          component: "com.example/SearchField"
+          width:
+            mode: fill
+          arguments:
+            placeholder: Search projects
+            size: medium
+        - id: actions
+          type: stack
+          axis: horizontal
+          align: center
+          gap: "{core.spacing.300}"
+          children:
+            - id: iconButton
+              type: component
+              component: "com.example/Button"
+              arguments:
+                kind: icon
+                tone: primary
+                size: medium
+                icon:
+                  component: "com.example/Icon"
+                  arguments:
+                    name: search
+            - id: labeled
+              type: component
+              component: "com.example/Button"
+              arguments:
+                kind: text
+                label: New
+                tone: primary
+                size: medium
+                icon:
+                  component: "com.example/Icon"
+                  arguments:
+                    name: plus
+        - id: alert
+          type: component
+          component: "com.example/Alert"
+          width:
+            mode: fill
+          arguments:
+            tone: warning
+            title: Name, not paths
+            message: Hosts resolve search from their catalog.

@@ -14,6 +14,8 @@ imports:
 arguments:
   icon:
     type: component
+    accepts:
+      protocol: Icon
     optional: true
     role: slot
 

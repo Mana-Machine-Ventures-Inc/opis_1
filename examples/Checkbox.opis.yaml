@@ -72,7 +72,9 @@ structure:
         - id: mark
           type: slot
           source:
-            glyph: check
+            component: "com.example/Icon"
+            arguments:
+              name: check
           hidden:
             match:
               on: "$arguments.checked"

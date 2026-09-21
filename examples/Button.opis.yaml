@@ -45,7 +45,8 @@ arguments:
 
   icon:
     type: component
-    accepts: "com.example/Icon"
+    accepts:
+      protocol: Icon
     optional: true
     role: slot
 
@@ -154,6 +155,13 @@ structure:
           secondary: "{core.color.action.secondary}"
           destructive: "{core.color.action.destructive}"
     radius: "{core.radius.control}"
+    color:
+      match:
+        on: "$arguments.tone"
+        cases:
+          primary: "{core.color.text.onAction}"
+          secondary: "{core.color.text.primary}"
+          destructive: "{core.color.text.onAction}"
 
   children:
     - id: icon

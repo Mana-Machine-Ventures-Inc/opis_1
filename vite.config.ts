@@ -71,6 +71,7 @@ function opisSavePlugin(): Plugin {
 
 export default defineConfig({
   root: ".",
+  publicDir: "hosts/html",
   plugins: [opisSavePlugin()],
   server: {
     port: 5173,

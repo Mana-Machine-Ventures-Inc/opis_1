@@ -1,0 +1,42 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/IconBarItem"
+  name: "IconBarItem"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  name:
+    type: enum
+    values: [plus, search, check, close, minus, info, warning]
+    default: search
+    role: content
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: center
+  gap: "{core.spacing.200}"
+  width:
+    mode: fixed
+    value: 64
+
+  children:
+    - id: glyph
+      type: component
+      component: "com.example/Icon"
+      arguments:
+        name: "$arguments.name"
+    - id: label
+      type: text
+      content: "$arguments.name"
+      style:
+        typography: "{core.typography.caption}"
+        color: "{core.color.text.secondary}"

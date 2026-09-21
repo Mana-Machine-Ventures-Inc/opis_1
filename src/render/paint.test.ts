@@ -79,6 +79,11 @@ describe("appearance paint", () => {
     expect(css.backdropFilter).toContain("blur(20px)");
   });
 
+  it("applies layer blur", () => {
+    const css = painted({ blur: { layer: 8 } });
+    expect(css.filter).toContain("blur(8px)");
+  });
+
   it("keeps background and stroke string shorthands", () => {
     const css = painted({
       background: "#fff",

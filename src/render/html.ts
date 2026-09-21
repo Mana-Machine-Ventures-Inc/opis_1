@@ -1,16 +1,7 @@
 import { isObject } from "../core/expressions.ts";
 import type { Json } from "../core/types.ts";
+import { iconUrl } from "./icons.ts";
 import { applyPaint, cssLength } from "./paint.ts";
-
-const GLYPHS: Record<string, string> = {
-  plus: `<circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/>`,
-  search: `<circle cx="7" cy="7" r="4.25"/><path d="M10.2 10.2L13 13"/>`,
-  check: `<path d="M3.5 8.2l3 3.1 6-6.4"/>`,
-  close: `<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>`,
-  minus: `<path d="M4 8h8"/>`,
-  info: `<circle cx="8" cy="8" r="6"/><path d="M8 7.2v4"/><path d="M8 5.2v0.1"/>`,
-  warning: `<path d="M8 2.8L14 13.2H2L8 2.8z"/><path d="M8 6.6v3.2"/><path d="M8 11.4v0.2"/>`,
-};
 
 const TONE_FILL: Record<string, string> = {
   primary: "#2563eb",
@@ -71,6 +62,10 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     return text;
   }
 
+  if (value.type === "icon") {
+    return renderIcon(value, parentAxis);
+  }
+
   if (value.type === "slot") {
     if (isAbsentSlot(value.source)) {
       return document.createElement("span");
@@ -78,7 +73,7 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     if (isObject(value.source) && typeof value.source.type === "string") {
       return createNode(value.source, parentAxis);
     }
-    return renderIcon(value);
+    return renderIcon(value, parentAxis);
   }
 
   if (value.type === "instance") {
@@ -129,11 +124,16 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
 
   const children = participatingChildren(value);
   let maskPocket: HTMLElement | null = null;
+  let paintIndex = 0;
   for (const child of children) {
     if (value.type === "overlay" && isObject(child) && child.mask === true) {
       const pocket = document.createElement("div");
       pocket.className = "opis-mask";
+      pocket.style.display = "grid";
+      pocket.style.gridTemplate = "1fr / 1fr";
       pocket.style.overflow = "hidden";
+      pocket.style.isolation = "isolate";
+      pocket.style.zIndex = String(paintIndex++);
       applyOverlayChild(pocket, child, value);
       applyBox(pocket, child);
       applyPaint(pocket, { radius: isObject(child.style) ? child.style.radius ?? null : null }, child);
@@ -152,6 +152,7 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     if (value.overflow === "scroll") rendered.style.flexShrink = "0";
     if (value.type === "overlay" && isObject(child)) {
       applyOverlayChild(rendered, child, value);
+      rendered.style.zIndex = String(paintIndex++);
     }
     (maskPocket ?? box).append(rendered);
   }
@@ -178,26 +179,50 @@ function isAbsentSlot(source: Json | undefined): boolean {
   return source == null || source === false;
 }
 
-function renderIcon(node: { [key: string]: Json }): HTMLElement {
+function renderIcon(node: { [key: string]: Json }, parentAxis?: "horizontal" | "vertical"): HTMLElement {
   const wrap = document.createElement("span");
   wrap.className = "opis-icon";
+  if (typeof node.id === "string") wrap.dataset.id = node.id;
   wrap.setAttribute("aria-hidden", "true");
   const size = iconSize(node);
   wrap.style.width = `${size}px`;
   wrap.style.height = `${size}px`;
   wrap.style.flex = "0 0 auto";
+  applyBox(wrap, node, parentAxis);
   applyPaint(wrap, node.style, node);
-  const name = glyphName(node.source);
-  const paths = GLYPHS[name] ?? GLYPHS.plus;
-  wrap.innerHTML = `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  const name = glyphName(node);
+  const url = iconUrl(name);
+  wrap.dataset.icon = name;
+  if (!url) return wrap;
+  if (node.kind === "artwork") {
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    wrap.append(img);
+    return wrap;
+  }
+  wrap.style.backgroundColor = "currentColor";
+  wrap.style.webkitMaskImage = `url("${url}")`;
+  wrap.style.maskImage = `url("${url}")`;
+  wrap.style.webkitMaskRepeat = "no-repeat";
+  wrap.style.maskRepeat = "no-repeat";
+  wrap.style.webkitMaskPosition = "center";
+  wrap.style.maskPosition = "center";
+  wrap.style.webkitMaskSize = "contain";
+  wrap.style.maskSize = "contain";
   return wrap;
 }
 
-function glyphName(source: Json | undefined): string {
-  if (isObject(source) && typeof source.glyph === "string") return source.glyph;
-  if (isObject(source) && isObject(source.arguments) && typeof source.arguments.name === "string") {
-    return source.arguments.name;
+function glyphName(node: { [key: string]: Json }): string {
+  if (typeof node.name === "string") return node.name;
+  if (isObject(node.source) && typeof node.source.glyph === "string") return node.source.glyph;
+  if (isObject(node.source) && isObject(node.source.arguments) && typeof node.source.arguments.name === "string") {
+    return node.source.arguments.name;
   }
+  if (isObject(node.arguments) && typeof node.arguments.name === "string") return node.arguments.name;
   return "plus";
 }
 

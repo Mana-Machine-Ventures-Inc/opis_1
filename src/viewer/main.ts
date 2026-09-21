@@ -1,8 +1,9 @@
 import tokenSource from "../../examples/core.tokens.json?raw";
-import { evalPredicate } from "../core/expressions.ts";
+import { evalPredicate, isObject } from "../core/expressions.ts";
 import { evaluateDocument, libraryFromDocuments, parseOpisYaml } from "../core/index.ts";
 import type { ArgumentDefinition, Json, OpisDocument, TokenSet } from "../core/types.ts";
 import { renderNode } from "../render/html.ts";
+import { ICON_NAMES } from "../render/icons.ts";
 
 const yamlModules = import.meta.glob("../../examples/*.opis.yaml", {
   eager: true,
@@ -499,7 +500,13 @@ function argsFromForm(form: HTMLFormElement, doc: OpisDocument): Record<string, 
   for (const [name, def] of argumentEntries(doc)) {
     const raw = data.get(name);
     if (def.type === "component") {
-      if (raw === "true") out[name] = { component: "com.example/Icon" };
+      const rawStr = String(raw ?? "false");
+      if (rawStr === "false" || rawStr === "") continue;
+      const iconName = rawStr === "true" ? "plus" : rawStr;
+      out[name] = {
+        component: "com.example/Icon",
+        arguments: { name: iconName },
+      };
       continue;
     }
     if (def.type === "component[]") continue;
@@ -548,11 +555,19 @@ function controlHtml(
     return select(name, ["false", "true"], on ? "true" : "false", disabled);
   }
   if (def.type === "component") {
-    const on = value != null && value !== false;
+    const selected =
+      isObject(value) && isObject(value.arguments) && typeof value.arguments.name === "string"
+        ? value.arguments.name
+        : value != null && value !== false
+          ? "plus"
+          : "false";
     return `<label>${escapeHtml(name)}
       <select name="${escapeAttr(name)}" ${disabled ? "disabled" : ""}>
-        <option value="false" ${on ? "" : "selected"}>none</option>
-        <option value="true" ${on ? "selected" : ""}>plus</option>
+        <option value="false" ${selected === "false" ? "selected" : ""}>none</option>
+        ${ICON_NAMES.map(
+          (item) =>
+            `<option value="${escapeAttr(item)}" ${item === selected ? "selected" : ""}>${escapeHtml(item)}</option>`,
+        ).join("")}
       </select>
     </label>`;
   }

@@ -49,6 +49,92 @@ structure:
             typography: "{core.typography.label}"
             color: "{core.color.text.primary}"
 
+    - id: strokes
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: strokeInside
+          type: stack
+          axis: vertical
+          align: center
+          distribution: center
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 72
+          padding: "{core.spacing.300}"
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.control}"
+            stroke:
+              color: "{core.color.accent.info}"
+              width: 4
+              align: inside
+          children:
+            - id: strokeInsideLabel
+              type: text
+              content: Inside
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+        - id: strokeCenter
+          type: stack
+          axis: vertical
+          align: center
+          distribution: center
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 72
+          padding: "{core.spacing.300}"
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.control}"
+            stroke:
+              color: "{core.color.accent.info}"
+              width: 4
+              align: center
+          children:
+            - id: strokeCenterLabel
+              type: text
+              content: Center
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+        - id: strokeOutside
+          type: stack
+          axis: vertical
+          align: center
+          distribution: center
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 72
+          padding: "{core.spacing.300}"
+          style:
+            background: "{core.color.surface.default}"
+            radius: "{core.radius.control}"
+            stroke:
+              color: "{core.color.accent.info}"
+              width: 4
+              align: outside
+          children:
+            - id: strokeOutsideLabel
+              type: text
+              content: Outside
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
     - id: elevation
       type: stack
       width:
@@ -84,6 +170,172 @@ structure:
 
     - id: frost
       type: overlay
+      alignment:
+        inline: end
+        block: center
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 160
+      children:
+        - id: frostBack
+          type: overlay
+          width:
+            mode: fill
+          height:
+            mode: fill
+          children:
+            - id: frostRed
+              type: media
+              width:
+                mode: fill
+              height:
+                mode: fill
+              style:
+                background: "{core.color.cover.rose}"
+            - id: frostMark
+              type: stack
+              width:
+                mode: fixed
+                value: 88
+              height:
+                mode: fixed
+                value: 88
+              style:
+                background: "#ffffff"
+                radius: "{core.radius.full}"
+        - id: frostGlass
+          type: stack
+          axis: vertical
+          align: center
+          distribution: center
+          width:
+            mode: fixed
+            value: 160
+          height:
+            mode: fill
+          style:
+            fills:
+              - type: solid
+                color: "#ffffff"
+                opacity: 0.38
+            blur:
+              backdrop: "{core.blur.material}"
+            radius: "{core.radius.control}"
+            stroke:
+              color: "#ffffff"
+              width: 1
+              align: inside
+          children:
+            - id: frostLabel
+              type: text
+              content: Backdrop blur
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+    - id: layerPair
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: layerSharpCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: layerSharp
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 72
+              style:
+                radius: "{core.radius.control}"
+              children:
+                - id: layerSharpArt
+                  type: media
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+                  style:
+                    fills:
+                      - type: linearGradient
+                        angle: 0
+                        stops:
+                          - color: "{core.color.cover.amber}"
+                            position: 0
+                          - color: "{core.color.cover.amber}"
+                            position: 0.5
+                          - color: "{core.color.cover.indigo}"
+                            position: 0.5
+                          - color: "{core.color.cover.indigo}"
+                            position: 1
+            - id: layerSharpLabel
+              type: text
+              content: Sharp
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+
+        - id: layerBlurCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: layerBlur
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 72
+              style:
+                radius: "{core.radius.control}"
+                blur:
+                  layer: "{core.blur.soft}"
+              children:
+                - id: layerBlurArt
+                  type: media
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+                  style:
+                    fills:
+                      - type: linearGradient
+                        angle: 0
+                        stops:
+                          - color: "{core.color.cover.amber}"
+                            position: 0
+                          - color: "{core.color.cover.amber}"
+                            position: 0.5
+                          - color: "{core.color.cover.indigo}"
+                            position: 0.5
+                          - color: "{core.color.cover.indigo}"
+                            position: 1
+            - id: layerBlurLabel
+              type: text
+              content: Layer blur
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+
+    - id: progressive
+      type: overlay
+      alignment:
+        inline: start
+        block: end
       width:
         mode: fill
       height:
@@ -92,7 +344,7 @@ structure:
       style:
         radius: "{core.radius.card}"
       children:
-        - id: frostBack
+        - id: progressiveArt
           type: media
           width:
             mode: fill
@@ -101,36 +353,79 @@ structure:
           style:
             fills:
               - type: linearGradient
-                angle: 135
+                angle: 160
                 stops:
-                  - color: "{core.color.cover.teal}"
+                  - color: "{core.color.cover.rose}"
                     position: 0
-                  - color: "{core.color.cover.indigo}"
+                  - color: "{core.color.cover.plum}"
                     position: 1
-        - id: frostGlass
+        - id: progressiveVeil
           type: stack
           width:
             mode: fill
           height:
             mode: fill
+          style:
+            blur:
+              progressive:
+                start: 0
+                end: 28
+                along: block
+                from: end
+        - id: progressiveLabel
+          type: text
+          content: Progressive blur
+          width:
+            mode: fill
           padding: "{core.spacing.400}"
           style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.onAction}"
+
+    - id: maskClip
+      type: overlay
+      alignment:
+        inline: start
+        block: end
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 96
+      children:
+        - id: maskShape
+          type: stack
+          mask: true
+          width:
+            mode: fill
+          height:
+            mode: fill
+          style:
+            radius: "{core.radius.full}"
+        - id: maskArt
+          type: media
+          width:
+            mode: fill
+          height:
+            mode: fill
+          style:
             fills:
-              - type: solid
-                color: "#ffffff"
-                opacity: 0.28
-            blur:
-              backdrop: "{core.blur.material}"
-            radius: "{core.radius.card}"
-            noise:
-              opacity: 0.12
-          children:
-            - id: frostLabel
-              type: text
-              content: Backdrop blur + grain
-              style:
-                typography: "{core.typography.label}"
-                color: "{core.color.text.onAction}"
+              - type: linearGradient
+                angle: 115
+                stops:
+                  - color: "{core.color.cover.olive}"
+                    position: 0
+                  - color: "{core.color.cover.plum}"
+                    position: 1
+        - id: maskLabel
+          type: text
+          content: Masked to a pill
+          width:
+            mode: fill
+          padding: "{core.spacing.400}"
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.onAction}"
 
     - id: dash
       type: stack
