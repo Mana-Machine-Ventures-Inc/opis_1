@@ -306,6 +306,17 @@ pre {
 
 .opis-media {
   overflow: hidden;
+  position: relative;
+}
+
+.opis-media img,
+.opis-media video {
+  display: block;
+}
+
+.opis-mask {
+  min-width: 0;
+  min-height: 0;
 }
 
 .opis-collection[data-overflow="scroll"],

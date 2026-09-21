@@ -51,7 +51,14 @@ structure:
   style:
     background: "{core.color.surface.default}"
     radius: "{core.radius.card}"
-    shadow: "0 10px 30px rgba(15, 23, 42, 0.08)"
+    shadows:
+      - kind: drop
+        x: 0
+        y: 10
+        blur: 30
+        spread: 0
+        color: "{core.color.shadow}"
+        opacity: 0.5
 
   children:
     - id: heading

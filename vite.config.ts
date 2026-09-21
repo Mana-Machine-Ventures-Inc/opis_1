@@ -52,8 +52,8 @@ function opisSavePlugin(): Plugin {
       const yaml = file.match(/\/examples\/([^/]+)\.opis\.yaml$/);
       const isTokens = file.endsWith("/examples/core.tokens.json");
       if (!yaml && !isTokens) return;
-      const name = isTokens ? "tokens" : yaml![1];
-      void ctx.read().then((body) => {
+      const name = isTokens ? "tokens" : yaml?.[1] ?? "file";
+      void Promise.resolve(ctx.read()).then((body: string) => {
         ctx.server.ws.send({
           type: "custom",
           event: "opis-update",

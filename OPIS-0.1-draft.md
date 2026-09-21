@@ -750,6 +750,10 @@ On a text node, `align: end` is a shorthand for `alignment.inline: end`. If both
 
 `stretch` is not a text alignment value.
 
+A text node MAY set `maxLines` and `truncate` as defined in §46.9.
+
+Typography MAY include `fontFamily`, `fontSize`, `fontWeight`, `fontStyle`, `lineHeight`, `letterSpacing`, `decoration`, `case`, `paragraphSpacing`, and `paragraphIndent`.
+
 Text presentation SHOULD use token references when possible.
 
 ```yaml
@@ -824,18 +828,23 @@ A `media` node represents externally supplied media such as:
 
 - images,
 - illustrations,
-- video thumbnails,
+- video,
 - or other visual assets.
-
-OPIS 0.1 does not define a media transport format.
-
-Example:
 
 ```yaml
 - id: hero
   type: media
   source: "$arguments.image"
+  fit: crop
 ```
+
+`fit` uses the same values as image fills in §46.2. Default is `crop`.
+
+`source` MAY be a token, argument, or URL. A host that cannot fetch a source MUST still honor size, radius, and fallback fills.
+
+`mediaKind` MAY be `image` or `video`. If omitted, the host infers from `source`.
+
+OPIS 0.1 does not define a media transport format.
 
 Media argument typing may be standardized in a later version.
 
@@ -987,6 +996,11 @@ aspectRatio
 overflow
 order
 itemLayout
+rotation
+mask
+maxLines
+truncate
+fit
 ```
 
 On a text node, `alignment` places glyphs inside the text box. See §25.
@@ -1261,7 +1275,243 @@ Hidden nodes MUST NOT participate in normal layout.
 
 ---
 
-# 46. Constraints
+# 46. Appearance
+
+Paint belongs on the node, in `style`.
+
+OPIS appearance is a portable drawing description. It MUST NOT require CSS, SwiftUI, or Figma effect objects as the interchange form.
+
+A host MAY accept CSS color or gradient strings as authoring sugar. Canonical form is the typed objects below.
+
+```yaml
+style:
+  opacity: 1
+  mix: normal
+  color: "{core.color.text.primary}"
+  radius: "{core.radius.card}"
+  cornerSmoothing: 0.6
+  fills:
+    - type: solid
+      color: "{core.color.surface.default}"
+  stroke:
+    color: "{core.color.line}"
+    width: 1
+    align: inside
+  shadows:
+    - kind: drop
+      x: 0
+      y: 10
+      blur: 30
+      spread: 0
+      color: "{core.color.shadow}"
+  blur:
+    layer: 0
+    backdrop: 20
+  typography: "{core.typography.body}"
+```
+
+`background` is a shorthand for one solid or gradient fill.
+
+`shadow` as a single string is a shorthand for one drop shadow. Implementations SHOULD prefer `shadows`.
+
+`stroke` as a color string is a shorthand for `{ width: 1, align: inside, color: <string> }`.
+
+## 46.1 Radius
+
+`radius` MAY be a uniform length or a logical map:
+
+```yaml
+radius: 12
+
+radius:
+  startStart: 12
+  startEnd: 12
+  endEnd: 0
+  endStart: 0
+```
+
+`startStart` is the corner where block-start meets inline-start (top-left in LTR horizontal-tb).
+
+`cornerSmoothing` is a number from 0 to 1. 0 is a circular arc. Values near 0.6 approximate iOS continuous corners. Hosts that cannot smooth corners MUST still honor `radius`.
+
+## 46.2 Fills
+
+`fills` is a back-to-front list. The first fill is painted back-most.
+
+A fill MAY set `hidden: true`, `opacity`, and `mix`.
+
+Fill types:
+
+```text
+solid
+linearGradient
+radialGradient
+angularGradient
+diamondGradient
+image
+video
+```
+
+Solid:
+
+```yaml
+type: solid
+color: "{core.color.surface.default}"
+```
+
+Linear gradient. `angle` is degrees clockwise from the inline-end axis. 0 points toward inline-end. `position` on a stop is 0–1 along the gradient line.
+
+```yaml
+type: linearGradient
+angle: 180
+stops:
+  - color: "{core.color.cover.amber}"
+    position: 0
+  - color: "#00000000"
+    position: 1
+```
+
+Radial and angular gradients MAY set `cx` and `cy` in 0–1 of the node box. Angular `angle` is the starting heading, same convention as linear.
+
+Diamond gradients follow Figma’s diamond interpolation. Hosts MAY approximate them with a radial fill.
+
+Image and video fills:
+
+```yaml
+type: image
+source: "$arguments.photo"
+fit: crop
+```
+
+`fit` legal values:
+
+```text
+fill
+fit
+crop
+tile
+```
+
+`fill` stretches to the box. `fit` contains. `crop` covers and clips. `tile` repeats at intrinsic size.
+
+A `media` node MAY set `source`, `fit`, and `adjust` without putting an image in `fills`. `adjust` MAY include `exposure`, `contrast`, `saturation`, and `temperature` as signed numbers around 0.
+
+## 46.3 Strokes
+
+```yaml
+stroke:
+  color: "{core.color.line}"
+  width: 1
+  align: inside
+  dash: [4, 4]
+```
+
+`align` legal values: `inside`, `center`, `outside`. Default `inside`.
+
+`width` MAY be a uniform length or a side map (`top` / `right` / `bottom` / `left`, or `block` / `inline`).
+
+`dash` is a list of on/off lengths. Omitted means a solid stroke.
+
+`strokes` MAY be a list. Paint order is back to front.
+
+## 46.4 Shadows
+
+```yaml
+shadows:
+  - kind: drop
+    x: 0
+    y: 8
+    blur: 24
+    spread: 0
+    color: "{core.color.shadow}"
+    opacity: 0.16
+  - kind: inner
+    x: 0
+    y: 1
+    blur: 2
+    color: "{core.color.line}"
+```
+
+`kind` is `drop` or `inner`. Offsets are in the node’s coordinate system. `blur` and `spread` are lengths.
+
+## 46.5 Blur
+
+```yaml
+blur:
+  layer: 8
+  backdrop: 20
+  progressive:
+    start: 0
+    end: 24
+    along: block
+    from: end
+```
+
+`layer` blurs the node’s own pixels. `backdrop` blurs content behind the node.
+
+`progressive` interpolates blur along `inline` or `block` from `start` to `end` of that axis. `from` is `start` or `end`.
+
+`noise` MAY be set as:
+
+```yaml
+noise:
+  opacity: 0.08
+```
+
+Noise is a fine grain overlay. It MUST NOT replace a fill.
+
+## 46.6 Blend
+
+`mix` is the node’s blend with what is already painted.
+
+Legal values:
+
+```text
+normal
+multiply
+screen
+overlay
+darken
+lighten
+plus
+```
+
+Hosts MUST treat unknown mix values as `normal`.
+
+`opacity` is a number from 0 to 1 for the whole node.
+
+## 46.7 Rotation
+
+Any node MAY set:
+
+```yaml
+rotation: 15
+```
+
+Rotation is degrees clockwise about the node’s center. It does not change layout participation size.
+
+## 46.8 Masks
+
+An overlay child MAY set `mask: true`.
+
+That child does not paint. It clips overlay children that paint after it (front-er layers) to its box, including its radius.
+
+## 46.9 Text overflow
+
+A `text` node MAY set:
+
+```yaml
+maxLines: 2
+truncate: end
+```
+
+`truncate` legal values: `end`, `start`, `none`. Default `end` when `maxLines` is set.
+
+Typography MAY also include `fontStyle` (`normal` | `italic`), `decoration` (`none` | `underline` | `lineThrough`), `case` (`none` | `uppercase` | `lowercase`), `paragraphSpacing`, and `paragraphIndent`.
+
+---
+
+# 47. Constraints
 
 Constraints define which argument configurations are valid.
 
@@ -1283,7 +1533,7 @@ constraints:
 
 ---
 
-# 47. `require`
+# 48. `require`
 
 A requirement states that when one predicate is satisfied, another predicate MUST also be satisfied.
 
@@ -1300,7 +1550,7 @@ A requirement states that when one predicate is satisfied, another predicate MUS
 
 ---
 
-# 48. `forbid`
+# 49. `forbid`
 
 A forbidden condition identifies an invalid configuration.
 
@@ -1322,7 +1572,7 @@ A conforming validator MUST report a matching forbidden condition as invalid.
 
 ---
 
-# 49. Conditional argument availability
+# 50. Conditional argument availability
 
 Arguments MAY define availability conditions.
 
@@ -1339,7 +1589,7 @@ An argument that is supplied while unavailable MUST produce a validation error.
 
 ---
 
-# 50. Conditional argument prohibition
+# 51. Conditional argument prohibition
 
 ```yaml
 label:
@@ -1361,7 +1611,7 @@ This is shorthand for an equivalent constraint.
 
 ---
 
-# 51. Property expressions
+# 52. Property expressions
 
 Valid arguments affect appearance and structure through **property expressions**.
 
@@ -1408,7 +1658,7 @@ OPIS 0.1 MUST NOT use a top-level `conditions` list, `when`/`set` patches, or do
 
 ---
 
-# 52. Independent axes
+# 53. Independent axes
 
 Independent argument dimensions compose by writing to different properties.
 
@@ -1439,11 +1689,11 @@ style:
 
 A large destructive button receives both results because `size` owns `height` and `tone` owns `background`.
 
-When two axes affect the same property, their interaction MUST be expressed as a nested `match` on that property. See §54.
+When two axes affect the same property, their interaction MUST be expressed as a nested `match` on that property. See §55.
 
 ---
 
-# 53. `match`
+# 54. `match`
 
 `match` selects a value from a finite selector.
 
@@ -1492,7 +1742,7 @@ The value of an arm MAY itself be a literal, a token reference, or another prope
 
 ---
 
-# 54. Exhaustiveness
+# 55. Exhaustiveness
 
 A `match` on an enum or boolean MUST be exhaustive.
 
@@ -1519,7 +1769,7 @@ order:
 
 ---
 
-# 55. Nested `match`
+# 56. Nested `match`
 
 When one property depends on more than one argument, nest `match` expressions inside the property that depends on both.
 
@@ -1551,7 +1801,7 @@ Axes MUST NOT be multiplied into a document-level grid of patches.
 
 ---
 
-# 56. `if`
+# 57. `if`
 
 `if` selects between two values using a predicate.
 
@@ -1589,7 +1839,7 @@ An optional argument without a default MUST NOT be used as a `match` selector. U
 
 ---
 
-# 57. Predicates
+# 58. Predicates
 
 Predicates are used by constraints and by `if`.
 
@@ -1654,7 +1904,7 @@ A processor SHOULD be able to statically evaluate collection-count predicates wh
 
 ---
 
-# 58. Evaluation
+# 59. Evaluation
 
 Property expressions are evaluated after the component’s constraints have been satisfied.
 
@@ -1681,7 +1931,7 @@ children:
 
 ---
 
-# 59. No document-level overrides
+# 60. No document-level overrides
 
 The following are not part of OPIS 0.1:
 
@@ -1701,7 +1951,7 @@ A conforming implementation MUST reject a top-level `conditions` property as an 
 
 ---
 
-# 60. Authoring `when` trees
+# 61. Authoring `when` trees
 
 OPIS is an interchange representation.
 
@@ -1723,7 +1973,7 @@ Nested `when` is not a normative OPIS 0.1 construct.
 ---
 
 
-# 61. Environment
+# 62. Environment
 
 OPIS distinguishes component arguments from renderer-provided environmental context.
 
@@ -1761,7 +2011,7 @@ environment:
 
 ---
 
-# 62. Composition
+# 63. Composition
 
 OPIS favors composition over inheritance.
 
@@ -1781,7 +2031,7 @@ OPIS 0.1 does not define component inheritance.
 
 ---
 
-# 63. Open composition
+# 64. Open composition
 
 Protocols allow a parent to accept components it does not know about in advance.
 
@@ -1804,7 +2054,7 @@ This allows independently defined components to participate in the parent compos
 
 ---
 
-# 64. Example: Button
+# 65. Example: Button
 
 ```yaml
 $schema: "https://opis-spec.org/schema/0.1"
@@ -1998,7 +2248,7 @@ No top-level override list is required.
 
 ---
 
-# 65. Example: Modal
+# 66. Example: Modal
 
 ```yaml
 opis: "0.1"
@@ -2101,7 +2351,7 @@ Those are ordinary argument configurations.
 
 ---
 
-# 66. Example: Carousel
+# 67. Example: Carousel
 
 ```yaml
 opis: "0.1"
@@ -2156,7 +2406,7 @@ Any component that conforms to `ContentItem` may be supplied, including through 
 
 ---
 
-# 67. Component scale
+# 68. Component scale
 
 OPIS does not distinguish between “component,” “section,” and “page” at the schema level.
 
@@ -2184,7 +2434,7 @@ A component SHOULD remain declarative and reusable regardless of scale.
 
 ---
 
-# 68. What OPIS deliberately does not model
+# 69. What OPIS deliberately does not model
 
 A OPIS component MUST NOT contain arbitrary application logic.
 
@@ -2207,7 +2457,7 @@ Hosts MAY bind application behavior to OPIS components externally.
 
 ---
 
-# 69. Documentation boundary
+# 70. Documentation boundary
 
 OPIS MAY contain concise descriptions necessary to understand component APIs.
 
@@ -2233,7 +2483,7 @@ Those concerns SHOULD be represented by documentation systems such as DSDS or ot
 
 ---
 
-# 70. Implementation boundary
+# 71. Implementation boundary
 
 OPIS describes semantic interface structure.
 
@@ -2269,7 +2519,7 @@ Such mappings are outside OPIS 0.1.
 
 ---
 
-# 71. Canonicalization
+# 72. Canonicalization
 
 A OPIS implementation SHOULD be able to convert valid authoring YAML into a canonical resolved intermediate representation.
 
@@ -2293,7 +2543,7 @@ YAML is the recommended human-readable interchange syntax.
 
 ---
 
-# 72. Round-trip expectations
+# 73. Round-trip expectations
 
 A conforming OPIS-aware tool SHOULD preserve all standard OPIS semantics when importing and exporting a document.
 
@@ -2309,7 +2559,7 @@ If a tool cannot represent a OPIS feature, it SHOULD:
 
 ---
 
-# 73. Extensions
+# 74. Extensions
 
 Experimental or vendor-specific information SHOULD be placed under:
 
@@ -2325,7 +2575,7 @@ A conforming implementation MAY ignore extensions.
 
 ---
 
-# 74. Validation levels
+# 75. Validation levels
 
 OPIS tools SHOULD distinguish at least three classes of issue.
 
@@ -2377,7 +2627,7 @@ Advisories MUST NOT invalidate a document.
 
 ---
 
-# 75. Static analysis goals
+# 76. Static analysis goals
 
 A OPIS implementation SHOULD make the following questions answerable without arbitrary code execution:
 
@@ -2409,7 +2659,7 @@ This property is fundamental to OPIS.
 
 ---
 
-# 76. AI and tooling
+# 77. AI and tooling
 
 OPIS is intentionally suitable for machine manipulation.
 
@@ -2430,7 +2680,7 @@ Machine use does not change OPIS semantics.
 
 ---
 
-# 77. Relationship to authoring languages
+# 78. Relationship to authoring languages
 
 OPIS is a specification, not necessarily the preferred human authoring language.
 
@@ -2461,7 +2711,7 @@ OPIS itself SHOULD remain conservative and portable.
 
 ---
 
-# 78. Relationship to visual editors
+# 79. Relationship to visual editors
 
 A visual editor MAY use OPIS as:
 
@@ -2489,7 +2739,7 @@ This allows exploratory design to remain flexible while stable design decisions 
 
 ---
 
-# 79. Relationship to DTCG
+# 80. Relationship to DTCG
 
 DTCG defines design values.
 
@@ -2525,7 +2775,7 @@ OPIS MUST NOT introduce a competing generic token system.
 
 ---
 
-# 80. Relationship to documentation specifications
+# 81. Relationship to documentation specifications
 
 Documentation systems may reference OPIS components and derive structured information from them.
 
@@ -2551,7 +2801,7 @@ OPIS itself remains focused on interface definition.
 
 ---
 
-# 81. Minimal conformance
+# 82. Minimal conformance
 
 A minimum conforming OPIS 0.1 implementation MUST support:
 
@@ -2579,10 +2829,11 @@ A minimum conforming OPIS 0.1 implementation MUST support:
 - match exhaustiveness,
 - constraints,
 - protocol conformance.
+- appearance (`style` fills, radius, stroke, shadows, blur, mix).
 
 ---
 
-# 82. Future areas
+# 83. Future areas
 
 The following are intentionally deferred:
 
@@ -2612,7 +2863,7 @@ These MAY be standardized in later OPIS versions or companion specifications.
 
 ---
 
-# 83. Summary
+# 84. Summary
 
 OPIS defines a portable semantic contract for user-interface composition.
 

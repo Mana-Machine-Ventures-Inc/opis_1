@@ -460,6 +460,22 @@ describe("Button evaluation", () => {
     expect(tree.width).toEqual({ mode: "fill" });
     expect(tree.alignment).toEqual({ inline: "end", block: "center" });
   });
+
+  it("preserves structured shadows and fills on StyleGallery", () => {
+    const gallery = library["com.example/StyleGallery"];
+    const result = evaluateDocument(gallery, {}, tokens, {}, { library });
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = result.painted as { [key: string]: Json };
+    const children = tree.children as Array<{ [key: string]: Json }>;
+    const elevation = children.find((child) => child.id === "elevation");
+    expect(isObject(elevation?.style) && Array.isArray(elevation.style.shadows)).toBe(true);
+    const frost = children.find((child) => child.id === "frost");
+    const frostKids = Array.isArray(frost?.children) ? frost.children : [];
+    const glass = frostKids.find((child) => isObject(child) && child.id === "frostGlass") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(isObject(glass?.style) && isObject(glass.style.blur)).toBe(true);
+  });
 });
 
 function walk(node: Json, visit: (node: { [key: string]: Json }) => void) {

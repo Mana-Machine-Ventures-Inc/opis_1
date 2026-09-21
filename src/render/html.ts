@@ -1,5 +1,6 @@
 import { isObject } from "../core/expressions.ts";
 import type { Json } from "../core/types.ts";
+import { applyPaint, cssLength } from "./paint.ts";
 
 const GLYPHS: Record<string, string> = {
   plus: `<circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/>`,
@@ -54,8 +55,14 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     text.style.flexDirection = "column";
     text.style.justifyContent = cssJustifyBlock(block);
     applyBox(text, value, parentAxis);
-    applyStyle(text, value.style);
-    if (parentAxis === "horizontal" && isObject(value.width) && value.width.mode === "fill") {
+    text.append(run);
+    applyPaint(text, value.style, value);
+    if (
+      !value.maxLines &&
+      parentAxis === "horizontal" &&
+      isObject(value.width) &&
+      value.width.mode === "fill"
+    ) {
       run.style.whiteSpace = "nowrap";
       run.style.overflow = "hidden";
       run.style.textOverflow = "ellipsis";
@@ -118,10 +125,22 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
   }
 
   applyBox(box, value, parentAxis);
-  applyStyle(box, value.style);
+  applyPaint(box, value.style, value);
 
   const children = participatingChildren(value);
+  let maskPocket: HTMLElement | null = null;
   for (const child of children) {
+    if (value.type === "overlay" && isObject(child) && child.mask === true) {
+      const pocket = document.createElement("div");
+      pocket.className = "opis-mask";
+      pocket.style.overflow = "hidden";
+      applyOverlayChild(pocket, child, value);
+      applyBox(pocket, child);
+      applyPaint(pocket, { radius: isObject(child.style) ? child.style.radius ?? null : null }, child);
+      box.append(pocket);
+      maskPocket = pocket;
+      continue;
+    }
     const rendered = createNode(
       withInheritedMetrics(child, value),
       value.type === "overlay" ? undefined : axis,
@@ -134,7 +153,7 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     if (value.type === "overlay" && isObject(child)) {
       applyOverlayChild(rendered, child, value);
     }
-    box.append(rendered);
+    (maskPocket ?? box).append(rendered);
   }
 
   return box;
@@ -167,7 +186,7 @@ function renderIcon(node: { [key: string]: Json }): HTMLElement {
   wrap.style.width = `${size}px`;
   wrap.style.height = `${size}px`;
   wrap.style.flex = "0 0 auto";
-  applyStyle(wrap, node.style);
+  applyPaint(wrap, node.style, node);
   const name = glyphName(node.source);
   const paths = GLYPHS[name] ?? GLYPHS.plus;
   wrap.innerHTML = `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
@@ -204,7 +223,7 @@ function renderComponent(node: { [key: string]: Json }, parentAxis?: "horizontal
   el.style.background = TONE_FILL[tone] ?? TONE_FILL.secondary;
   el.style.color = TONE_INK[tone] ?? TONE_INK.secondary;
   applyBox(el, node, parentAxis);
-  applyStyle(el, node.style);
+  applyPaint(el, node.style, node);
   return el;
 }
 
@@ -337,25 +356,6 @@ function applyDimension(
   }
 }
 
-function applyStyle(el: HTMLElement, style: Json | undefined) {
-  if (!isObject(style)) return;
-  if (typeof style.background === "string") el.style.background = style.background;
-  if (typeof style.color === "string") el.style.color = style.color;
-  if (style.radius != null) el.style.borderRadius = cssLength(style.radius) ?? "";
-  if (style.opacity != null) el.style.opacity = String(style.opacity);
-  if (typeof style.border === "string") el.style.border = style.border;
-  if (typeof style.stroke === "string") el.style.border = `1px solid ${style.stroke}`;
-  if (typeof style.shadow === "string") el.style.boxShadow = style.shadow;
-  if (isObject(style.typography)) {
-    const type = style.typography;
-    if (typeof type.fontFamily === "string") el.style.fontFamily = type.fontFamily;
-    if (type.fontSize != null) el.style.fontSize = cssLength(type.fontSize) ?? "";
-    if (type.fontWeight != null) el.style.fontWeight = String(type.fontWeight);
-    if (type.lineHeight != null) el.style.lineHeight = String(type.lineHeight);
-    if (type.letterSpacing != null) el.style.letterSpacing = String(type.letterSpacing);
-  }
-}
-
 function textInlineAlign(node: { [key: string]: Json }): string {
   if (isObject(node.alignment) && node.alignment.inline != null) {
     return String(node.alignment.inline);
@@ -419,13 +419,6 @@ function justifyContent(value: Json | undefined): string {
     default:
       return "center";
   }
-}
-
-function cssLength(value: Json | undefined): string | null {
-  if (value == null) return null;
-  if (typeof value === "number") return value === 0 ? "0px" : `${value}px`;
-  if (typeof value === "string") return value;
-  return null;
 }
 
 function dimensionValue(value: Json | undefined): number | null {

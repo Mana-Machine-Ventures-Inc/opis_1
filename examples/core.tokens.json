@@ -43,6 +43,7 @@
       "muted": { "$type": "color", "$value": "#94a3b8" }
     },
     "line": { "$type": "color", "$value": "#e2e8f0" },
+    "shadow": { "$type": "color", "$value": "rgba(15, 23, 42, 0.16)" },
     "accent": {
       "success": { "$type": "color", "$value": "#16a34a" },
       "warning": { "$type": "color", "$value": "#d97706" },
@@ -117,6 +118,23 @@
         "fontWeight": 600,
         "lineHeight": "1.2",
         "letterSpacing": "0.01em"
+      }
+    }
+  },
+  "blur": {
+    "material": { "$type": "dimension", "$value": "20px" },
+    "soft": { "$type": "dimension", "$value": "8px" }
+  },
+  "shadow": {
+    "card": {
+      "$type": "shadow",
+      "$value": {
+        "kind": "drop",
+        "x": 0,
+        "y": 10,
+        "blur": 30,
+        "spread": 0,
+        "color": "rgba(15, 23, 42, 0.08)"
       }
     }
   }
