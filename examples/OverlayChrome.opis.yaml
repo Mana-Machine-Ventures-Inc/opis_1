@@ -1,0 +1,88 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/OverlayChrome"
+  name: "OverlayChrome"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  title:
+    type: string
+    default: "Night Harbor"
+    role: content
+
+  badge:
+    type: string
+    default: "Live"
+    role: content
+
+structure:
+  id: root
+  type: overlay
+  width:
+    mode: fill
+  maxWidth: 360
+  height:
+    mode: fixed
+    value: 180
+  style:
+    radius: "{core.radius.card}"
+    background: "{core.color.surface.sunken}"
+
+  children:
+    - id: artwork
+      type: media
+      source: "/media/harbor.jpg"
+      fit: crop
+      width:
+        mode: fill
+      height:
+        mode: fill
+
+    - id: badge
+      type: stack
+      pin:
+        inline: end
+        block: start
+      margin: 10
+      padding:
+        inline: 8
+        block: 4
+      style:
+        background: "{core.color.cover.rose}"
+        radius: "{core.radius.full}"
+      children:
+        - id: badgeLabel
+          type: text
+          content: "$arguments.badge"
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.onAction}"
+
+    - id: caption
+      type: stack
+      axis: vertical
+      gap: 2
+      pin:
+        inline: start
+        block: end
+      margin: 12
+      children:
+        - id: kicker
+          type: text
+          content: "Featured album"
+          style:
+            typography: "{core.typography.caption}"
+            color: "{core.color.text.onAction}"
+        - id: heading
+          type: text
+          content: "$arguments.title"
+          style:
+            typography: "{core.typography.heading}"
+            color: "{core.color.text.onAction}"

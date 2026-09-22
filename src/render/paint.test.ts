@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { applyPaint } from "./paint.ts";
+import { applyLayerMask, applyPaint } from "./paint.ts";
 import type { Json } from "../core/types.ts";
 
-function painted(style: Json) {
+function painted(style: Json, node: { [key: string]: Json } = { type: "stack" }) {
   const bag: Record<string, string> = {};
   const el = {
     style: new Proxy(bag, {
@@ -23,7 +23,29 @@ function painted(style: Json) {
     append() {},
     prepend() {},
   } as unknown as HTMLElement;
-  applyPaint(el, style, { type: "stack" });
+  applyPaint(el, style, node);
+  return bag;
+}
+
+function masked(child: Json) {
+  const bag: Record<string, string> = {};
+  const el = {
+    style: new Proxy(bag, {
+      get(target, key) {
+        if (key === "setProperty") {
+          return (name: string, value: string) => {
+            target[name] = value;
+          };
+        }
+        return target[String(key)] ?? "";
+      },
+      set(target, key, value) {
+        target[String(key)] = String(value);
+        return true;
+      },
+    }),
+  } as unknown as HTMLElement;
+  applyLayerMask(el, child as { [key: string]: Json });
   return bag;
 }
 
@@ -93,5 +115,65 @@ describe("appearance paint", () => {
     expect(css.backgroundColor).toBe("#fff");
     expect(css.border).toBe("1px solid #e2e8f0");
     expect(css.boxShadow).toBe("0 8px 16px rgba(0,0,0,0.1)");
+  });
+
+  it("builds an alpha mask from a radial fill", () => {
+    const css = masked({
+      mask: "alpha",
+      style: {
+        fills: [
+          {
+            type: "radialGradient",
+            stops: [
+              { color: "#ffffff", position: 0 },
+              { color: "#ffffff00", position: 1 },
+            ],
+          },
+        ],
+      },
+    });
+    expect(css.maskImage).toContain("radial-gradient");
+    expect(css.maskImage).toContain("#ffffff00");
+    expect(css.maskComposite).toBeUndefined();
+  });
+
+  it("inverts a mask with exclude compositing", () => {
+    const css = masked({
+      mask: "inverse",
+      style: {
+        fills: [{ type: "solid", color: "#ffffff" }],
+      },
+    });
+    expect(css.maskImage).toContain("linear-gradient(#ffffff, #ffffff)");
+    expect(css.maskComposite).toBe("exclude");
+    expect(css["-webkit-mask-composite"]).toBe("xor");
+  });
+
+  it("uses a file URL as an alpha stencil and honors fit", () => {
+    const css = masked({
+      mask: "alpha",
+      source: "/masks/star.svg",
+      fit: "fit",
+    });
+    expect(css.maskImage).toContain("url(\"/masks/star.svg\")");
+    expect(css.maskSize).toBe("contain");
+    expect(css.maskMode).toBe("alpha");
+    expect(css["-webkit-mask-source-type"]).toBe("alpha");
+  });
+
+  it("falls back to a geometric clip when the mask has no paint", () => {
+    const css = masked({
+      mask: true,
+      style: { radius: 999 },
+    });
+    expect(css.overflow).toBe("hidden");
+    expect(css.borderRadius).toBe("999px");
+    expect(css.maskImage).toBeUndefined();
+  });
+
+  it("composes flip and rotation", () => {
+    const css = painted({}, { flip: "inline", rotation: 15 });
+    expect(css.transform).toContain("scaleX(-1)");
+    expect(css.transform).toContain("rotate(15deg)");
   });
 });

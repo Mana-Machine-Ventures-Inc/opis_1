@@ -1,7 +1,7 @@
 import { isObject } from "../core/expressions.ts";
 import type { Json } from "../core/types.ts";
 import { iconUrl } from "./icons.ts";
-import { applyPaint, cssLength } from "./paint.ts";
+import { applyLayerMask, applyPaint, applyTypography, cssLength, isMaskChild } from "./paint.ts";
 
 const TONE_FILL: Record<string, string> = {
   primary: "#2563eb",
@@ -35,9 +35,10 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
   if (value.type === "text") {
     const text = document.createElement("div");
     text.className = "opis-text";
+    if (typeof value.id === "string") text.dataset.id = value.id;
     const run = document.createElement("span");
     run.className = "opis-text-run";
-    run.textContent = value.content == null ? "" : String(value.content);
+    fillTextRun(run, value);
     const inline = textInlineAlign(value);
     const block = textBlockAlign(value);
     run.style.width = "100%";
@@ -46,7 +47,6 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
     text.style.flexDirection = "column";
     text.style.justifyContent = cssJustifyBlock(block);
     applyBox(text, value, parentAxis);
-    text.append(run);
     applyPaint(text, value.style, value);
     if (
       !value.maxLines &&
@@ -126,17 +126,16 @@ function createNode(value: Json, parentAxis?: "horizontal" | "vertical"): HTMLEl
   let maskPocket: HTMLElement | null = null;
   let paintIndex = 0;
   for (const child of children) {
-    if (value.type === "overlay" && isObject(child) && child.mask === true) {
+    if (value.type === "overlay" && isObject(child) && isMaskChild(child)) {
       const pocket = document.createElement("div");
       pocket.className = "opis-mask";
       pocket.style.display = "grid";
       pocket.style.gridTemplate = "1fr / 1fr";
-      pocket.style.overflow = "hidden";
       pocket.style.isolation = "isolate";
       pocket.style.zIndex = String(paintIndex++);
       applyOverlayChild(pocket, child, value);
       applyBox(pocket, child);
-      applyPaint(pocket, { radius: isObject(child.style) ? child.style.radius ?? null : null }, child);
+      applyLayerMask(pocket, child);
       box.append(pocket);
       maskPocket = pocket;
       continue;
@@ -274,11 +273,11 @@ function applyOverlayChild(
   el.style.gridArea = "1 / 1";
   el.style.minWidth = "0";
   el.style.minHeight = "0";
-  const alignment = isObject(overlay.alignment) ? overlay.alignment : {};
+  const pin = isObject(child.pin) ? child.pin : isObject(overlay.alignment) ? overlay.alignment : {};
   const widthFill = isObject(child.width) && child.width.mode === "fill";
   const heightFill = isObject(child.height) && child.height.mode === "fill";
-  el.style.justifySelf = widthFill ? "stretch" : overlaySelf(alignment.inline);
-  el.style.alignSelf = heightFill ? "stretch" : overlaySelf(alignment.block);
+  el.style.justifySelf = widthFill ? "stretch" : overlaySelf(pin.inline);
+  el.style.alignSelf = heightFill ? "stretch" : overlaySelf(pin.block);
   if (widthFill) el.style.width = "100%";
   if (heightFill) el.style.height = "100%";
 }
@@ -305,6 +304,7 @@ function applyBox(
   if (gap) el.style.gap = gap;
 
   applyPadding(el, node.padding);
+  applyPadding(el, node.margin, "margin");
   applyDimension(el, "height", node.height, parentAxis);
   applyDimension(el, "width", node.width, parentAxis);
 
@@ -341,19 +341,33 @@ function applyBox(
   }
 }
 
-function applyPadding(el: HTMLElement, padding: Json | undefined) {
+function applyPadding(el: HTMLElement, padding: Json | undefined, kind: "padding" | "margin" = "padding") {
   if (padding == null) return;
   if (typeof padding === "number" || typeof padding === "string") {
-    el.style.padding = cssLength(padding) ?? "0";
+    el.style[kind] = cssLength(padding) ?? "0";
     return;
   }
   if (!isObject(padding)) return;
-  if (padding.block != null) el.style.paddingBlock = cssLength(padding.block) ?? "";
-  if (padding.inline != null) el.style.paddingInline = cssLength(padding.inline) ?? "";
-  if (padding.top != null) el.style.paddingTop = cssLength(padding.top) ?? "";
-  if (padding.right != null) el.style.paddingRight = cssLength(padding.right) ?? "";
-  if (padding.bottom != null) el.style.paddingBottom = cssLength(padding.bottom) ?? "";
-  if (padding.left != null) el.style.paddingLeft = cssLength(padding.left) ?? "";
+  const assign = (prop: "paddingBlock" | "paddingInline" | "paddingTop" | "paddingRight" | "paddingBottom" | "paddingLeft" | "marginBlock" | "marginInline" | "marginTop" | "marginRight" | "marginBottom" | "marginLeft", raw: Json | undefined) => {
+    if (raw == null) return;
+    const len = cssLength(raw);
+    if (len) el.style[prop] = len;
+  };
+  if (kind === "margin") {
+    assign("marginBlock", padding.block);
+    assign("marginInline", padding.inline);
+    assign("marginTop", padding.top);
+    assign("marginRight", padding.right);
+    assign("marginBottom", padding.bottom);
+    assign("marginLeft", padding.left);
+    return;
+  }
+  assign("paddingBlock", padding.block);
+  assign("paddingInline", padding.inline);
+  assign("paddingTop", padding.top);
+  assign("paddingRight", padding.right);
+  assign("paddingBottom", padding.bottom);
+  assign("paddingLeft", padding.left);
 }
 
 function applyDimension(
@@ -367,18 +381,49 @@ function applyDimension(
     el.style[property] = cssLength(value.value) ?? "";
     if (property === "width") el.style.flex = "0 0 auto";
   } else if (value.mode === "fill") {
-    el.style[property] = "100%";
-    if (property === "width") {
-      el.style.minWidth = el.style.minWidth || "0";
-      el.dataset.widthMode = "fill";
-      if (parentAxis === "horizontal") el.style.flex = "1 1 auto";
-    }
-    if (property === "height" && parentAxis === "vertical") {
-      el.style.flex = "1 1 auto";
+    const weight = Number(value.weight ?? 1);
+    const grow = Number.isFinite(weight) && weight > 0 ? weight : 1;
+    const main =
+      (property === "width" && parentAxis === "horizontal") ||
+      (property === "height" && parentAxis === "vertical");
+    if (main) {
+      el.style.flexGrow = String(grow);
+      el.style.flexShrink = "1";
+      el.style.flexBasis = "0px";
+      el.style[property] = "auto";
+      if (property === "width") {
+        el.style.minWidth = el.style.minWidth || "0";
+        el.dataset.widthMode = "fill";
+      }
+    } else {
+      el.style[property] = "100%";
+      if (property === "width") {
+        el.style.minWidth = el.style.minWidth || "0";
+        el.dataset.widthMode = "fill";
+      }
     }
   } else if (value.mode === "intrinsic") {
     el.style[property] = "auto";
   }
+}
+
+function fillTextRun(run: HTMLElement, node: { [key: string]: Json }) {
+  const spans = node.spans;
+  if (Array.isArray(spans) && spans.length > 0) {
+    for (const span of spans) {
+      if (!isObject(span)) continue;
+      const piece = document.createElement("span");
+      piece.textContent = span.content == null ? "" : String(span.content);
+      if (isObject(span.style)) {
+        if (typeof span.style.color === "string") piece.style.color = span.style.color;
+        applyTypography(piece, span.style.typography);
+        applyTypography(piece, span.style);
+      }
+      run.append(piece);
+    }
+    return;
+  }
+  run.textContent = node.content == null ? "" : String(node.content);
 }
 
 function textInlineAlign(node: { [key: string]: Json }): string {
@@ -428,6 +473,8 @@ function alignItems(value: Json | undefined): string {
       return "flex-end";
     case "stretch":
       return "stretch";
+    case "baseline":
+      return "baseline";
     default:
       return "center";
   }

@@ -427,6 +427,270 @@ structure:
             typography: "{core.typography.label}"
             color: "{core.color.text.onAction}"
 
+    - id: maskAlpha
+      type: overlay
+      alignment:
+        inline: start
+        block: end
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 120
+      style:
+        radius: "{core.radius.card}"
+        background: "{core.color.surface.sunken}"
+      children:
+        - id: alphaShape
+          type: stack
+          mask: alpha
+          width:
+            mode: fill
+          height:
+            mode: fill
+          style:
+            fills:
+              - type: radialGradient
+                cx: 0.5
+                cy: 0.5
+                stops:
+                  - color: "#ffffff"
+                    position: 0
+                  - color: "#ffffff"
+                    position: 0.42
+                  - color: "#ffffff00"
+                    position: 1
+        - id: alphaArt
+          type: media
+          source: "/media/harbor.jpg"
+          fit: crop
+          width:
+            mode: fill
+          height:
+            mode: fill
+        - id: alphaLabel
+          type: text
+          content: Alpha mask
+          width:
+            mode: fill
+          padding: "{core.spacing.400}"
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.onAction}"
+
+    - id: maskInverse
+      type: overlay
+      alignment:
+        inline: center
+        block: center
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 120
+      style:
+        radius: "{core.radius.card}"
+        background: "{core.color.cover.teal}"
+      children:
+        - id: inverseLabel
+          type: text
+          content: Inverse hole
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.onAction}"
+        - id: inverseShape
+          type: stack
+          mask: inverse
+          width:
+            mode: fill
+          height:
+            mode: fill
+          style:
+            fills:
+              - type: radialGradient
+                cx: 0.5
+                cy: 0.5
+                stops:
+                  - color: "#ffffff"
+                    position: 0
+                  - color: "#ffffff"
+                    position: 0.34
+                  - color: "#ffffff00"
+                    position: 0.36
+                  - color: "#ffffff00"
+                    position: 1
+        - id: inverseArt
+          type: media
+          source: "/media/harbor.jpg"
+          fit: crop
+          width:
+            mode: fill
+          height:
+            mode: fill
+
+    - id: maskVector
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: starCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: starFrame
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 160
+              style:
+                radius: "{core.radius.control}"
+                background: "{core.color.surface.sunken}"
+              children:
+                - id: starShape
+                  type: media
+                  mask: alpha
+                  source: "/masks/star.svg"
+                  fit: fit
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+                - id: starArt
+                  type: media
+                  source: "/media/harbor.jpg"
+                  fit: crop
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+            - id: starLabel
+              type: text
+              content: SVG star
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+        - id: blobCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: blobFrame
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 160
+              style:
+                radius: "{core.radius.control}"
+                background: "{core.color.surface.sunken}"
+              children:
+                - id: blobShape
+                  type: media
+                  mask: alpha
+                  source: "/masks/blob.svg"
+                  fit: fit
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+                - id: blobArt
+                  type: media
+                  source: "/media/harbor.jpg"
+                  fit: crop
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+            - id: blobLabel
+              type: text
+              content: SVG blob
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+
+    - id: fitPair
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: cropCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: cropFrame
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 120
+              style:
+                radius: "{core.radius.control}"
+              children:
+                - id: cropArt
+                  type: media
+                  source: "/media/harbor.jpg"
+                  fit: crop
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+            - id: cropLabel
+              type: text
+              content: Crop
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+        - id: fitCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: fitFrame
+              type: overlay
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 120
+              style:
+                radius: "{core.radius.control}"
+                background: "{core.color.surface.sunken}"
+              children:
+                - id: fitArt
+                  type: media
+                  source: "/media/harbor.jpg"
+                  fit: fit
+                  width:
+                    mode: fill
+                  height:
+                    mode: fill
+            - id: fitLabel
+              type: text
+              content: Fit
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+
     - id: dash
       type: stack
       width:
@@ -507,6 +771,177 @@ structure:
                 y: 6
                 blur: 12
                 color: "{core.color.shadow}"
+
+    - id: overlayPins
+      type: overlay
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 160
+      style:
+        radius: "{core.radius.card}"
+        background: "{core.color.surface.sunken}"
+      children:
+        - id: pinArt
+          type: media
+          source: "/media/harbor.jpg"
+          fit: crop
+          width:
+            mode: fill
+          height:
+            mode: fill
+        - id: pinBadge
+          type: stack
+          pin:
+            inline: end
+            block: start
+          margin: 8
+          padding:
+            inline: 8
+            block: 4
+          style:
+            background: "{core.color.cover.rose}"
+            radius: "{core.radius.full}"
+          children:
+            - id: pinBadgeLabel
+              type: text
+              content: Live
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.onAction}"
+        - id: pinCaption
+          type: text
+          content: Night Harbor
+          pin:
+            inline: start
+            block: end
+          margin: 12
+          style:
+            typography: "{core.typography.label}"
+            color: "{core.color.text.onAction}"
+
+    - id: weightRow
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.200}"
+      width:
+        mode: fill
+      height:
+        mode: fixed
+        value: 56
+      children:
+        - id: weightOne
+          type: stack
+          align: center
+          distribution: center
+          width:
+            mode: fill
+            weight: 1
+          style:
+            background: "{core.color.surface.info}"
+            radius: "{core.radius.control}"
+          children:
+            - id: weightOneLabel
+              type: text
+              content: 1
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+        - id: weightTwo
+          type: stack
+          align: center
+          distribution: center
+          width:
+            mode: fill
+            weight: 2
+          style:
+            background: "{core.color.surface.sunken}"
+            radius: "{core.radius.control}"
+          children:
+            - id: weightTwoLabel
+              type: text
+              content: 2
+              style:
+                typography: "{core.typography.label}"
+                color: "{core.color.text.primary}"
+
+    - id: baselineRow
+      type: stack
+      axis: horizontal
+      align: baseline
+      gap: "{core.spacing.200}"
+      width:
+        mode: fill
+      children:
+        - id: baselineIcon
+          type: icon
+          name: search
+          kind: template
+          width:
+            mode: fixed
+            value: 16
+          height:
+            mode: fixed
+            value: 16
+          style:
+            color: "{core.color.text.secondary}"
+        - id: baselineCopy
+          type: text
+          content: Search across albums and artists
+          width:
+            mode: fill
+          style:
+            typography: "{core.typography.body}"
+            color: "{core.color.text.primary}"
+
+    - id: flipPair
+      type: stack
+      axis: horizontal
+      align: center
+      gap: "{core.spacing.400}"
+      width:
+        mode: fill
+      children:
+        - id: flipAhead
+          type: icon
+          name: search
+          width:
+            mode: fixed
+            value: 24
+          height:
+            mode: fixed
+            value: 24
+          style:
+            color: "{core.color.text.primary}"
+        - id: flipBack
+          type: icon
+          name: search
+          flip: inline
+          width:
+            mode: fixed
+            value: 24
+          height:
+            mode: fixed
+            value: 24
+          style:
+            color: "{core.color.text.primary}"
+
+    - id: richLine
+      type: text
+      width:
+        mode: fill
+      spans:
+        - content: "Now playing "
+        - content: "Night Harbor"
+          style:
+            fontWeight: 700
+            color: "{core.color.text.primary}"
+        - content: " — Ada Clark"
+      style:
+        typography: "{core.typography.body}"
+        color: "{core.color.text.secondary}"
 
     - id: clamp
       type: text

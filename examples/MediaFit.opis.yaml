@@ -1,0 +1,42 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/MediaFit"
+  name: "MediaFit"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+arguments:
+  fit:
+    type: enum
+    values: [crop, fit, fill]
+    default: crop
+    role: variant
+
+structure:
+  id: root
+  type: overlay
+  width:
+    mode: fill
+  maxWidth: 360
+  height:
+    mode: fixed
+    value: 160
+  style:
+    radius: "{core.radius.card}"
+    background: "{core.color.surface.sunken}"
+
+  children:
+    - id: photo
+      type: media
+      source: "/media/harbor.jpg"
+      fit: "$arguments.fit"
+      width:
+        mode: fill
+      height:
+        mode: fill

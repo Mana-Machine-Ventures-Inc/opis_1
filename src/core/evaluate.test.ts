@@ -498,6 +498,82 @@ describe("Button evaluation", () => {
       | { [key: string]: Json }
       | undefined;
     expect(maskShape?.mask).toBe(true);
+    const maskAlpha = children.find((child) => child.id === "maskAlpha");
+    const alphaKids = Array.isArray(maskAlpha?.children) ? maskAlpha.children : [];
+    const alphaShape = alphaKids.find((child) => isObject(child) && child.id === "alphaShape") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(alphaShape?.mask).toBe("alpha");
+    const maskInverse = children.find((child) => child.id === "maskInverse");
+    const inverseKids = Array.isArray(maskInverse?.children) ? maskInverse.children : [];
+    const inverseShape = inverseKids.find((child) => isObject(child) && child.id === "inverseShape") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(inverseShape?.mask).toBe("inverse");
+    const maskVector = children.find((child) => child.id === "maskVector");
+    const vectorJson = JSON.stringify(maskVector) ?? "";
+    expect(vectorJson).toContain("/masks/star.svg");
+    expect(vectorJson).toContain("/masks/blob.svg");
+    const fitPair = children.find((child) => child.id === "fitPair");
+    const cropArt = (JSON.stringify(fitPair) ?? "").includes("/media/harbor.jpg");
+    expect(cropArt).toBe(true);
+    const overlayPins = children.find((child) => child.id === "overlayPins");
+    const pinKids = Array.isArray(overlayPins?.children) ? overlayPins.children : [];
+    const pinBadge = pinKids.find((child) => isObject(child) && child.id === "pinBadge") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(isObject(pinBadge?.pin) && pinBadge.pin.inline === "end" && pinBadge.pin.block === "start").toBe(
+      true,
+    );
+    expect(pinBadge?.margin).toBe(8);
+    const weightTwo = children.find((child) => child.id === "weightRow");
+    expect(JSON.stringify(weightTwo)).toContain('"weight":2');
+    const baselineRow = children.find((child) => child.id === "baselineRow");
+    expect(baselineRow?.align).toBe("baseline");
+    const flipBack = JSON.stringify(children.find((child) => child.id === "flipPair"));
+    expect(flipBack).toContain('"flip":"inline"');
+    const richLine = children.find((child) => child.id === "richLine");
+    expect(Array.isArray(richLine?.spans) && (richLine.spans as Json[]).length).toBe(3);
+  });
+
+  it("binds MediaFit source and crop vs fit", () => {
+    const mediaFit = library["com.example/MediaFit"];
+    const crop = evaluateDocument(mediaFit, { fit: "crop" }, tokens, {}, { library });
+    expect(crop.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const cropPhoto = crop.painted as { [key: string]: Json };
+    const cropKids = Array.isArray(cropPhoto.children) ? cropPhoto.children : [];
+    const cropArt = cropKids.find((child) => isObject(child) && child.id === "photo") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(cropArt?.source).toBe("/media/harbor.jpg");
+    expect(cropArt?.fit).toBe("crop");
+
+    const fit = evaluateDocument(mediaFit, { fit: "fit" }, tokens, {}, { library });
+    expect(fit.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const fitPhoto = fit.painted as { [key: string]: Json };
+    const fitKids = Array.isArray(fitPhoto.children) ? fitPhoto.children : [];
+    const fitArt = fitKids.find((child) => isObject(child) && child.id === "photo") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(fitArt?.fit).toBe("fit");
+  });
+
+  it("pins OverlayChrome chrome to opposite corners", () => {
+    const chrome = library["com.example/OverlayChrome"];
+    const result = evaluateDocument(chrome, {}, tokens, {}, { library });
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const tree = result.painted as { [key: string]: Json };
+    const kids = Array.isArray(tree.children) ? tree.children : [];
+    const badge = kids.find((child) => isObject(child) && child.id === "badge") as
+      | { [key: string]: Json }
+      | undefined;
+    const caption = kids.find((child) => isObject(child) && child.id === "caption") as
+      | { [key: string]: Json }
+      | undefined;
+    expect(isObject(badge?.pin) && badge.pin.inline === "end" && badge.pin.block === "start").toBe(true);
+    expect(isObject(caption?.pin) && caption.pin.inline === "start" && caption.pin.block === "end").toBe(
+      true,
+    );
   });
 });
 

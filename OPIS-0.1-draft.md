@@ -753,6 +753,23 @@ On a text node, `align: end` is a shorthand for `alignment.inline: end`. If both
 
 A text node MAY set `maxLines` and `truncate` as defined in §47.9.
 
+A text node MAY set `spans` instead of a single `content` string when one box contains several runs:
+
+```yaml
+- id: title
+  type: text
+  spans:
+    - content: "Now playing "
+    - content: "Night Harbor"
+      style:
+        fontWeight: 700
+        color: "{core.color.text.primary}"
+```
+
+Each span MAY set `content` and `style`. Span `style` MAY include `color` and the typography keys above. Omitted keys inherit from the text node. If `spans` is present, it is the text. `content` MUST NOT also be used.
+
+This is mixed style inside one box. It is not a document model, not nested paragraphs, and not a rich-text tree.
+
 Typography MAY include `fontFamily`, `fontSize`, `fontWeight`, `fontStyle`, `lineHeight`, `letterSpacing`, `decoration`, `case`, `paragraphSpacing`, and `paragraphIndent`.
 
 Text presentation SHOULD use token references when possible.
@@ -844,6 +861,8 @@ A `media` node represents externally supplied media such as:
 `source` MAY be a token, argument, or URL. A host that cannot fetch a source MUST still honor size, radius, and fallback fills.
 
 `mediaKind` MAY be `image` or `video`. If omitted, the host infers from `source`.
+
+The HTML reference host keeps sample media at `hosts/html/media/`. OPIS documents still only say the source string, not the bytes.
 
 OPIS 0.1 does not define a media transport format.
 
@@ -1000,13 +1019,33 @@ If `overflow` is omitted on an overlay, it defaults to `clip`.
 
 The overlay owns the box. Typical overlays give the container a size or `aspectRatio`, let back layers `fill` that box, and keep foreground content intrinsic.
 
-`alignment` places children that do not fill an axis:
+`alignment` is the default pin for children that do not fill an axis:
 
 ```yaml
 alignment:
   inline: start
   block: end
 ```
+
+A child MAY set `pin` to place itself independently of other children:
+
+```yaml
+- id: badge
+  pin:
+    inline: end
+    block: start
+  margin: 8
+
+- id: caption
+  pin:
+    inline: start
+    block: end
+  margin:
+    inline: 12
+    block: 8
+```
+
+`pin` uses the same axes and values as overlay `alignment`. If `pin` is omitted, the child uses the overlay `alignment`. If that is omitted too, non-fill children are centered on both axes.
 
 Legal values on each axis:
 
@@ -1017,15 +1056,17 @@ end
 stretch
 ```
 
-A child with `width: fill` stretches on the inline axis regardless of `alignment.inline`.
+A child with `width: fill` stretches on the inline axis regardless of `pin.inline` or `alignment.inline`.
 
-A child with `height: fill` stretches on the block axis regardless of `alignment.block`.
+A child with `height: fill` stretches on the block axis regardless of `pin.block` or `alignment.block`.
 
-If `alignment` is omitted, non-fill children are centered on both axes.
+`pin` is overlay placement. It is not text `alignment`. A text node that is an overlay child still uses `alignment` for glyphs inside its box, and `pin` for where that box sits in the overlay.
+
+`margin` on an overlay child insets it from the edges it is pinned to. Padding on the overlay insets every child, including fill artwork. Prefer child `margin` for chrome that should not shrink the artwork.
 
 A shield, scrim, or gradient ramp is a fill-size layer with a painted background. It is not a separate node type.
 
-OPIS 0.1 does not define freeform x/y positioning. Overlay children are aligned to the overlay box, not placed at arbitrary coordinates.
+OPIS 0.1 does not define freeform x/y positioning, arbitrary offsets from center, or layout grids. Overlay children are pinned to the overlay box. Nested overlays express chrome in more than two corners.
 
 ---
 
@@ -1082,6 +1123,7 @@ axis
 gap
 align
 alignment
+pin
 distribution
 wrap
 width
@@ -1091,15 +1133,18 @@ maxWidth
 minHeight
 maxHeight
 padding
+margin
 aspectRatio
 overflow
 order
 itemLayout
 rotation
+flip
 mask
 maxLines
 truncate
 fit
+spans
 ```
 
 On a text node, `alignment` places glyphs inside the text box. See §25.
@@ -1163,9 +1208,12 @@ align: start
 align: center
 align: end
 align: stretch
+align: baseline
 ```
 
-This `align` does not place glyphs inside a text box. Text uses `alignment` as defined in §25.
+`baseline` aligns participating children to the first text baseline. Hosts that cannot resolve a baseline MUST treat it as `end`.
+
+This `align` does not place glyphs inside a text box. Text uses `alignment` as defined in §25. Overlay placement uses `pin` as defined in §31.
 
 ---
 
@@ -1211,6 +1259,24 @@ padding:
 ```
 
 Logical directions SHOULD be preferred where possible.
+
+Margin uses the same shapes. It is outside the border box.
+
+```yaml
+margin: 8
+
+margin:
+  block: 8
+  inline: 12
+
+margin:
+  top: 8
+  right: 8
+  bottom: 0
+  left: 8
+```
+
+On a stack child, margin is extra space beyond `gap`. On an overlay child, margin insets the child from the edges it is pinned to.
 
 ---
 
@@ -1272,9 +1338,12 @@ Host implementations determine the exact intrinsic-size algorithm.
 ```yaml
 width:
   mode: fill
+  weight: 2
 ```
 
 `fill` means the node SHOULD occupy available space offered by its parent along the relevant axis.
+
+When several siblings fill the same axis, `weight` is their share of leftover space. Omitted `weight` is 1. Weight does not apply to overlay fill, which stretches the overlay box.
 
 ---
 
@@ -1589,11 +1658,45 @@ rotation: 15
 
 Rotation is degrees clockwise about the node’s center. It does not change layout participation size.
 
+Any node MAY set:
+
+```yaml
+flip: inline
+```
+
+`flip` legal values: `inline`, `block`, `both`. It mirrors the node about its center. It does not change layout participation size. `flip` and `rotation` compose.
+
 ## 47.8 Masks
 
-An overlay child MAY set `mask: true`.
+An overlay child MAY set `mask`.
 
-That child does not paint. It clips overlay children that paint after it (front-er layers) to its box, including its radius.
+```yaml
+mask: true
+mask: alpha
+mask: inverse
+```
+
+`true` and `alpha` are the same. That child does not paint. It clips overlay children that paint after it (front-er layers) to its alpha.
+
+Alpha comes from the child’s fills, image/video/vector `source`, and opacity. Transparent pixels hide the layers in front. Opaque pixels show them.
+
+A mask child MAY set `source` to a file. OPIS 0.1 does not define path commands, Bézier data, or an outline geometry language. A vector stencil is a file. SVG is the portable format. A host MAY support additional vector formats. The host uses the file’s alpha as the mask. `fit` on that child sizes the stencil the same way as media.
+
+```yaml
+- id: stencil
+  type: media
+  mask: alpha
+  source: "/masks/star.svg"
+  fit: fit
+```
+
+The HTML reference host keeps sample vector masks at `hosts/html/masks/`. OPIS documents still only say the source string, not the path data.
+
+If the child has no paint and no source, the host MUST still clip to its box, including its radius. That is a geometric clip, not a path mask.
+
+`inverse` shows the layers in front where the child is transparent, and hides them where it is opaque.
+
+OPIS 0.1 does not define luminance masks or boolean path operations.
 
 ## 47.9 Text overflow
 
@@ -2926,6 +3029,9 @@ A minimum conforming OPIS 0.1 implementation MUST support:
 - alignment,
 - gap,
 - padding,
+- margin,
+- pin,
+- fill weight,
 - sizing,
 - DTCG references,
 - property expressions (`match` and `if`),
@@ -2958,7 +3064,7 @@ responsive layout primitives
 grid layout
 freeform positioned layout
 vector path IR
-rich text
+rich text documents
 internationalization semantics
 ```
 

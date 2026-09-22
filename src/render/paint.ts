@@ -9,12 +9,7 @@ export function cssLength(value: Json | undefined): string | null {
 }
 
 export function applyPaint(el: HTMLElement, style: Json | undefined, node: { [key: string]: Json } = {}) {
-  if (node.rotation != null) {
-    const deg = Number(node.rotation);
-    if (Number.isFinite(deg) && deg !== 0) {
-      el.style.transform = [el.style.transform, `rotate(${deg}deg)`].filter(Boolean).join(" ");
-    }
-  }
+  applyTransform(el, node);
 
   if (!isObject(style)) {
     applyMediaFit(el, node);
@@ -133,22 +128,7 @@ function applyRadius(el: HTMLElement, radius: Json | undefined, smoothing: Json 
 }
 
 function applyFills(el: HTMLElement, style: { [key: string]: Json }, node: { [key: string]: Json }) {
-  const layers: FillLayer[] = [];
-  if (typeof style.background === "string" && style.background.trim()) {
-    layers.push(fillFromShorthand(style.background));
-  } else if (isObject(style.background) || Array.isArray(style.background)) {
-    // match-resolved object treated below via fills
-  }
-  const fills = style.fills;
-  if (Array.isArray(fills)) {
-    for (const item of fills) {
-      if (!isObject(item) || item.hidden === true) continue;
-      layers.push(describeFill(item));
-    }
-  } else if (isObject(style.background) && typeof style.background.type === "string") {
-    layers.push(describeFill(style.background));
-  }
-
+  const layers = collectFillLayers(style, node);
   if (layers.length === 0) return;
 
   const images: string[] = [];
@@ -185,6 +165,87 @@ function applyFills(el: HTMLElement, style: { [key: string]: Json }, node: { [ke
   if (node.type === "media" && !node.source) {
     el.style.backgroundClip = "padding-box";
   }
+}
+
+function collectFillLayers(style: { [key: string]: Json }, node: { [key: string]: Json } = {}): FillLayer[] {
+  const layers: FillLayer[] = [];
+  if (typeof style.background === "string" && style.background.trim()) {
+    layers.push(fillFromShorthand(style.background));
+  }
+  const fills = style.fills;
+  if (Array.isArray(fills)) {
+    for (const item of fills) {
+      if (!isObject(item) || item.hidden === true) continue;
+      layers.push(describeFill(item));
+    }
+  } else if (isObject(style.background) && typeof style.background.type === "string") {
+    layers.push(describeFill(style.background));
+  }
+  return layers;
+}
+
+export function isMaskChild(child: { [key: string]: Json }): boolean {
+  return child.mask === true || child.mask === "alpha" || child.mask === "inverse";
+}
+
+export function applyLayerMask(el: HTMLElement, child: { [key: string]: Json }) {
+  const style = isObject(child.style) ? child.style : {};
+  applyRadius(el, style.radius, style.cornerSmoothing);
+  const inverse = child.mask === "inverse";
+  const stencils = maskLayers(style, child);
+  if (stencils.length === 0) {
+    el.style.overflow = "hidden";
+    return;
+  }
+  const layers = inverse
+    ? [{ image: "linear-gradient(#ffffff, #ffffff)", size: "100% 100%", repeat: "no-repeat" }, ...stencils]
+    : stencils;
+  const list = layers.map((layer) => layer.image).join(", ");
+  el.style.maskImage = list;
+  el.style.webkitMaskImage = list;
+  el.style.maskSize = layers.map((layer) => layer.size).join(", ");
+  el.style.webkitMaskSize = el.style.maskSize;
+  el.style.maskRepeat = layers.map((layer) => layer.repeat).join(", ");
+  el.style.webkitMaskRepeat = el.style.maskRepeat;
+  el.style.maskPosition = layers.map(() => "center").join(", ");
+  el.style.webkitMaskPosition = el.style.maskPosition;
+  el.style.maskMode = "alpha";
+  el.style.setProperty("-webkit-mask-source-type", "alpha");
+  if (inverse) {
+    el.style.maskComposite = "exclude";
+    el.style.setProperty("-webkit-mask-composite", "xor");
+  }
+  el.style.overflow = "hidden";
+}
+
+type MaskLayer = { image: string; size: string; repeat: string };
+
+function maskFit(fit: Json | undefined): { size: string; repeat: string } {
+  const value = typeof fit === "string" ? fit : "crop";
+  if (value === "fill") return { size: "100% 100%", repeat: "no-repeat" };
+  if (value === "fit") return { size: "contain", repeat: "no-repeat" };
+  if (value === "tile") return { size: "auto", repeat: "repeat" };
+  return { size: "cover", repeat: "no-repeat" };
+}
+
+function maskLayers(style: { [key: string]: Json }, node: { [key: string]: Json }): MaskLayer[] {
+  const layers: MaskLayer[] = [];
+  if (typeof node.source === "string" && node.source) {
+    layers.push({ image: `url(${JSON.stringify(node.source)})`, ...maskFit(node.fit) });
+  }
+  for (const layer of collectFillLayers(style, node)) {
+    if (layer.kind === "solid") {
+      if (!layer.image || layer.image === "transparent") continue;
+      layers.push({
+        image: `linear-gradient(${layer.image}, ${layer.image})`,
+        size: "100% 100%",
+        repeat: "no-repeat",
+      });
+    } else if (layer.image && layer.image !== "none") {
+      layers.push({ image: layer.image, size: layer.size, repeat: layer.repeat });
+    }
+  }
+  return layers;
 }
 
 type FillLayer = {
@@ -448,7 +509,7 @@ function applyNoise(el: HTMLElement, noise: Json | undefined) {
   el.append(grain);
 }
 
-function applyTypography(el: HTMLElement, typography: Json | undefined) {
+export function applyTypography(el: HTMLElement, typography: Json | undefined) {
   if (!isObject(typography)) return;
   const type = typography;
   if (typeof type.fontFamily === "string") el.style.fontFamily = type.fontFamily;
@@ -463,6 +524,18 @@ function applyTypography(el: HTMLElement, typography: Json | undefined) {
   if (type.case === "lowercase") el.style.textTransform = "lowercase";
   if (type.paragraphSpacing != null) el.style.marginBlockEnd = cssLength(type.paragraphSpacing) ?? "";
   if (type.paragraphIndent != null) el.style.textIndent = cssLength(type.paragraphIndent) ?? "";
+}
+
+function applyTransform(el: HTMLElement, node: { [key: string]: Json }) {
+  const parts: string[] = [];
+  const flip = node.flip;
+  if (flip === "inline" || flip === "both") parts.push("scaleX(-1)");
+  if (flip === "block" || flip === "both") parts.push("scaleY(-1)");
+  const deg = Number(node.rotation);
+  if (Number.isFinite(deg) && deg !== 0) parts.push(`rotate(${deg}deg)`);
+  if (parts.length > 0) {
+    el.style.transform = [el.style.transform, ...parts].filter(Boolean).join(" ");
+  }
 }
 
 function applyImageAdjust(el: HTMLElement, adjust: Json | undefined) {
