@@ -1,5 +1,6 @@
 {
   "spacing": {
+    "50": { "$type": "dimension", "$value": "2px" },
     "100": { "$type": "dimension", "$value": "4px" },
     "200": { "$type": "dimension", "$value": "8px" },
     "300": { "$type": "dimension", "$value": "12px" },

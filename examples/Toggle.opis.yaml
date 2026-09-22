@@ -45,7 +45,7 @@ structure:
       height:
         mode: fixed
         value: "{core.control.toggle.height}"
-      padding: "{core.spacing.100}"
+      padding: "{core.spacing.50}"
       distribution:
         match:
           on: "$arguments.on"
