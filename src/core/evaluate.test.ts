@@ -61,6 +61,37 @@ describe("Button evaluation", () => {
     );
   });
 
+  it("lets appearance compose independently of tone", () => {
+    const outline = paintedOf({
+      appearance: "outline",
+      kind: "text",
+      tone: "destructive",
+      label: "Delete",
+    });
+    expect(isObject(outline.style) && outline.style.background).toBe("transparent");
+    expect(isObject(outline.style) && isObject(outline.style.stroke) && outline.style.stroke.color).toBe(
+      "#dc2626",
+    );
+    expect(isObject(outline.style) && outline.style.color).toBe("#dc2626");
+
+    const ghost = paintedOf({
+      appearance: "ghost",
+      kind: "text",
+      tone: "primary",
+      label: "Continue",
+    });
+    expect(isObject(ghost.style) && ghost.style.background).toBe("transparent");
+    expect(isObject(ghost.style) && ghost.style.color).toBe("#2563eb");
+    expect(isObject(ghost.style) && ghost.style.stroke == null).toBe(true);
+
+    const disabled = paintedOf({
+      kind: "text",
+      label: "Wait",
+      disabled: true,
+    });
+    expect(isObject(disabled.style) && disabled.style.opacity).toBe(0.45);
+  });
+
   it("nests kind × size only on width", () => {
     const smallIcon = treeOf({
       kind: "icon",
@@ -633,6 +664,30 @@ describe("Icons", () => {
       if (node.type === "icon") names.push(String(node.name));
     });
     expect(names).toContain("plus");
+  });
+
+  it("evaluates MiniDS nested components and mask specimens", () => {
+    const mini = library["com.example/MiniDS"];
+    const result = evaluateDocument(mini, {}, tokens, {}, { library });
+    expect(result.diagnostics.filter((item) => item.level === "error")).toEqual([]);
+    const ids = new Set<string>();
+    walk(result.painted, (node) => {
+      if (typeof node.id === "string") ids.add(node.id);
+    });
+    expect(ids.has("btnOutlineMediumDestructive")).toBe(true);
+    expect(ids.has("btnGhostSmallPrimary")).toBe(true);
+    expect(ids.has("btnGhostLargeDestructive")).toBe(true);
+    expect(ids.has("maskInverse")).toBe(true);
+    expect(ids.has("fitRow")).toBe(true);
+    const json = JSON.stringify(result.painted);
+    expect(json).toContain("/media/harbor.jpg");
+    expect(json).toContain("/masks/star.svg");
+    expect(json).toContain('"mask":"inverse"');
+    expect(json).toContain('"fit":"crop"');
+    expect(json).toContain('"fit":"fit"');
+    expect(json).toContain('"fit":"fill"');
+    expect(json).toContain("Confirm subscription and continue");
+    expect(json).toContain("Night Harbor");
   });
 });
 

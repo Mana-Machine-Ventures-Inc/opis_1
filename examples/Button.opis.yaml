@@ -20,6 +20,12 @@ imports:
       source: "./core.tokens.json"
 
 arguments:
+  appearance:
+    type: enum
+    values: [solid, outline, ghost]
+    default: solid
+    role: variant
+
   kind:
     type: enum
     values: [text, icon]
@@ -37,6 +43,11 @@ arguments:
     values: [primary, secondary, destructive]
     default: primary
     role: variant
+
+  disabled:
+    type: boolean
+    default: false
+    role: state
 
   label:
     type: string
@@ -147,21 +158,67 @@ structure:
           - icon
 
   style:
+    radius: "{core.radius.control}"
+    opacity:
+      match:
+        on: "$arguments.disabled"
+        cases:
+          true: 0.45
+          false: 1
     background:
       match:
-        on: "$arguments.tone"
+        on: "$arguments.appearance"
         cases:
-          primary: "{core.color.action.primary}"
-          secondary: "{core.color.action.secondary}"
-          destructive: "{core.color.action.destructive}"
-    radius: "{core.radius.control}"
+          solid:
+            match:
+              on: "$arguments.tone"
+              cases:
+                primary: "{core.color.action.primary}"
+                secondary: "{core.color.action.secondary}"
+                destructive: "{core.color.action.destructive}"
+          outline: transparent
+          ghost: transparent
+    stroke:
+      match:
+        on: "$arguments.appearance"
+        cases:
+          solid: null
+          ghost: null
+          outline:
+            width: 1
+            align: inside
+            color:
+              match:
+                on: "$arguments.tone"
+                cases:
+                  primary: "{core.color.line}"
+                  secondary: "{core.color.line}"
+                  destructive: "{core.color.action.destructive}"
     color:
       match:
-        on: "$arguments.tone"
+        on: "$arguments.appearance"
         cases:
-          primary: "{core.color.text.onAction}"
-          secondary: "{core.color.text.primary}"
-          destructive: "{core.color.text.onAction}"
+          solid:
+            match:
+              on: "$arguments.tone"
+              cases:
+                primary: "{core.color.text.onAction}"
+                secondary: "{core.color.text.primary}"
+                destructive: "{core.color.text.onAction}"
+          outline:
+            match:
+              on: "$arguments.tone"
+              cases:
+                primary: "{core.color.text.primary}"
+                secondary: "{core.color.text.primary}"
+                destructive: "{core.color.action.destructive}"
+          ghost:
+            match:
+              on: "$arguments.tone"
+              cases:
+                primary: "{core.color.action.primary}"
+                secondary: "{core.color.text.primary}"
+                destructive: "{core.color.action.destructive}"
 
   children:
     - id: icon
@@ -180,10 +237,4 @@ structure:
 
       style:
         typography: "{core.typography.button}"
-        color:
-          match:
-            on: "$arguments.tone"
-            cases:
-              primary: "{core.color.text.onAction}"
-              secondary: "{core.color.text.primary}"
-              destructive: "{core.color.text.onAction}"
+        color: inherit

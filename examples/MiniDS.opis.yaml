@@ -1,0 +1,741 @@
+$schema: "https://opis-spec.org/schema/0.1"
+opis: "0.1"
+
+component:
+  id: "com.example/MiniDS"
+  name: "MiniDS"
+  version: "1.0.0"
+
+imports:
+  tokens:
+    - namespace: core
+      source: "./core.tokens.json"
+
+structure:
+  id: root
+  type: stack
+  axis: vertical
+  align: stretch
+  gap: "{core.spacing.600}"
+  width:
+    mode: fill
+  maxWidth: 720
+  padding: "{core.spacing.600}"
+  style:
+    background: "{core.color.surface.default}"
+
+  children:
+    - id: heading
+      type: text
+      content: Specimens
+      style:
+        typography: "{core.typography.heading}"
+        color: "{core.color.text.primary}"
+
+    - id: lede
+      type: text
+      content: 1:1 with OPIS Playground. Button is appearance × size × tone on independent axes; Figma stores the same axes as a variant matrix.
+      style:
+        typography: "{core.typography.body}"
+        color: "{core.color.text.secondary}"
+
+    - id: buttonsLabel
+      type: text
+      content: Button matrix + overflow
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.secondary}"
+
+    - id: buttonMatrix
+      type: stack
+      axis: horizontal
+      wrap: true
+      align: center
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: btnSolidSmallPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: small
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidSmallSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: small
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidSmallDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: small
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidMediumPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: medium
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidMediumSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: medium
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidMediumDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: medium
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineSmallPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: small
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineSmallSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: small
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineSmallDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: small
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineMediumPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: medium
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineMediumSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: medium
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineMediumDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: medium
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostSmallPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: small
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostSmallSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: small
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostSmallDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: small
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostMediumPrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: medium
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostMediumSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: medium
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostMediumDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: medium
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidLargePrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: large
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidLargeSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: large
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnSolidLargeDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: large
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineLargePrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: large
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineLargeSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: large
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnOutlineLargeDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: outline
+            kind: text
+            size: large
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostLargePrimary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: large
+            tone: primary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostLargeSecondary
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: large
+            tone: secondary
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnGhostLargeDestructive
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: ghost
+            kind: text
+            size: large
+            tone: destructive
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnLongLabel
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: medium
+            tone: primary
+            label: Confirm subscription and continue
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnIconOnly
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: icon
+            size: small
+            tone: primary
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+        - id: btnDisabled
+          type: component
+          component: "com.example/Button"
+          arguments:
+            appearance: solid
+            kind: text
+            size: medium
+            tone: primary
+            disabled: true
+            label: Button
+            icon:
+              component: "com.example/Icon"
+              arguments:
+                name: plus
+
+    - id: nestedLabel
+      type: text
+      content: Nested instances
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.secondary}"
+
+    - id: nestedRow
+      type: stack
+      axis: horizontal
+      wrap: true
+      align: center
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: badge
+          type: component
+          component: "com.example/Badge"
+          arguments:
+            tone: info
+            size: medium
+            label: Info
+        - id: toggle
+          type: component
+          component: "com.example/Toggle"
+          arguments:
+            on: true
+            label: On
+        - id: avatar
+          type: component
+          component: "com.example/Avatar"
+          arguments:
+            size: medium
+            tone: primary
+            initials: AC
+        - id: search
+          type: component
+          component: "com.example/SearchField"
+          arguments:
+            size: medium
+            query: Night Harbor
+
+    - id: alert
+      type: component
+      component: "com.example/Alert"
+      arguments:
+        tone: warning
+        title: Check settings
+        message: A newer version of this component library is ready to install.
+
+    - id: overlay
+      type: component
+      component: "com.example/OverlayChrome"
+      arguments:
+        title: Night Harbor
+        badge: Live
+
+    - id: masksLabel
+      type: text
+      content: Masks
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.secondary}"
+
+    - id: maskRow
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: maskClip
+          type: overlay
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 96
+          children:
+            - id: clipShape
+              type: stack
+              mask: true
+              width:
+                mode: fill
+              height:
+                mode: fill
+              style:
+                radius: "{core.radius.full}"
+            - id: clipArt
+              type: media
+              source: "/media/harbor.jpg"
+              fit: crop
+              width:
+                mode: fill
+              height:
+                mode: fill
+        - id: maskAlpha
+          type: overlay
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 120
+          style:
+            radius: "{core.radius.card}"
+            background: "{core.color.surface.sunken}"
+          children:
+            - id: alphaShape
+              type: stack
+              mask: alpha
+              width:
+                mode: fill
+              height:
+                mode: fill
+              style:
+                fills:
+                  - type: radialGradient
+                    cx: 0.5
+                    cy: 0.5
+                    stops:
+                      - color: "#ffffff"
+                        position: 0
+                      - color: "#ffffff"
+                        position: 0.42
+                      - color: "#ffffff00"
+                        position: 1
+            - id: alphaArt
+              type: media
+              source: "/media/harbor.jpg"
+              fit: crop
+              width:
+                mode: fill
+              height:
+                mode: fill
+        - id: maskInverse
+          type: overlay
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 120
+          style:
+            radius: "{core.radius.card}"
+            background: "{core.color.surface.sunken}"
+          children:
+            - id: inverseShape
+              type: stack
+              mask: inverse
+              width:
+                mode: fill
+              height:
+                mode: fill
+              style:
+                fills:
+                  - type: radialGradient
+                    cx: 0.5
+                    cy: 0.5
+                    stops:
+                      - color: "#ffffff"
+                        position: 0
+                      - color: "#ffffff"
+                        position: 0.34
+                      - color: "#ffffff00"
+                        position: 0.36
+                      - color: "#ffffff00"
+                        position: 1
+            - id: inverseArt
+              type: media
+              source: "/media/harbor.jpg"
+              fit: crop
+              width:
+                mode: fill
+              height:
+                mode: fill
+        - id: maskVector
+          type: overlay
+          width:
+            mode: fill
+          height:
+            mode: fixed
+            value: 160
+          style:
+            radius: "{core.radius.control}"
+            background: "{core.color.surface.sunken}"
+          children:
+            - id: starShape
+              type: media
+              mask: alpha
+              source: "/masks/star.svg"
+              fit: fit
+              width:
+                mode: fill
+              height:
+                mode: fill
+            - id: starArt
+              type: media
+              source: "/media/harbor.jpg"
+              fit: crop
+              width:
+                mode: fill
+              height:
+                mode: fill
+
+    - id: fitLabel
+      type: text
+      content: Media fit
+      style:
+        typography: "{core.typography.label}"
+        color: "{core.color.text.secondary}"
+
+    - id: fitRow
+      type: stack
+      axis: horizontal
+      align: stretch
+      gap: "{core.spacing.300}"
+      width:
+        mode: fill
+      children:
+        - id: fitCropCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: fitCrop
+              type: media
+              source: "/media/harbor.jpg"
+              fit: crop
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 160
+              style:
+                radius: "{core.radius.control}"
+            - id: fitCropCaption
+              type: text
+              content: crop
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+        - id: fitContainCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: fitContain
+              type: media
+              source: "/media/harbor.jpg"
+              fit: fit
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 160
+              style:
+                radius: "{core.radius.control}"
+                background: "{core.color.surface.sunken}"
+            - id: fitContainCaption
+              type: text
+              content: fit
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
+        - id: fitFillCol
+          type: stack
+          axis: vertical
+          gap: "{core.spacing.200}"
+          width:
+            mode: fill
+          children:
+            - id: fitFill
+              type: media
+              source: "/media/harbor.jpg"
+              fit: fill
+              width:
+                mode: fill
+              height:
+                mode: fixed
+                value: 160
+              style:
+                radius: "{core.radius.control}"
+            - id: fitFillCaption
+              type: text
+              content: fill
+              style:
+                typography: "{core.typography.caption}"
+                color: "{core.color.text.secondary}"
